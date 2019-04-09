@@ -1,8 +1,1 @@
-java -classpath ./ESKDB_R/bin:./lib/weka.jar:./lib/commons-math3-3.6.1.jar:./lib/MLTools.jar MDL_R.TwoFoldCVESKDB -t dataContinuous/ -X 5 -K 5 -S SKDB_R -I 1000 -L 2 -E 20 -R 0 > ESKDB20_62_HDP.out & 
-
-java -classpath ./ESKDB_R/bin:./lib/weka.jar:./lib/commons-math3-3.6.1.jar:./lib/MLTools.jar DisOnTrain.TwoFoldCVESKDBDisOnTrain -t dataContinuous/ -X 5 -K 5 -S NB -I 1000 -L 2 -E 20 -R 0 > NB_M.out & 
-
-java -Xmx 10000m -classpath ./ESKDB_R/bin:./lib/weka.jar:./lib/commons-math3-3.6.1.jar:./lib/MLTools.jar DisOnTrain.TwoFoldCVESKDBDisOnTrain -t 12ContinuousDataLarge/ -X 5 -K 5 -S KDB -I 1000 -L 2 -E 20 -R 0 > KDB_M_large.out & 
-
-
-java -Xmx10000m -classpath ./ESKDB_R/bin:./lib/weka.jar:./lib/commons-math3-3.6.1.jar:./lib/MLTools.jar MDL_R.TwoFoldCV -t lesslarge -X 5 -K 5 -S SKDB_R -I 1000 -L 2 -E 20 > E10_diabetes.out & 
+java -classpath ./ESKDB_R/bin:./lib/weka.jar:./lib/commons-math3-3.6.1.jar:./lib/MLTools.jar MDL_R.TwoFoldCVESKDB -t dataContinuous/ -X 5 -K 5 -S SKDB_R -I 1000 -L 2 -E 20 -R 0 > ESKDB_20_L2_HDP.out & 
