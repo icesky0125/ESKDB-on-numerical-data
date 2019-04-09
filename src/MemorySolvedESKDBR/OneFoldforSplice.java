@@ -1,15 +1,15 @@
-package MomorySolvedESKDBR;
+package MemorySolvedESKDBR;
 
 import java.io.BufferedReader;
 import java.io.File;
 import java.io.FileNotFoundException;
 import java.io.FileReader;
 import java.io.IOException;
-import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Random;
-import java.util.TreeMap;
 
+import hdp.logStirling.LogStirlingFactory;
+import hdp.logStirling.LogStirlingGenerator;
 import weka.classifiers.AbstractClassifier;
 import weka.core.Instance;
 import weka.core.Instances;
@@ -19,7 +19,7 @@ import weka.filters.Filter;
 import weka.core.converters.ArffSaver;
 import weka.core.converters.Saver;
 
-public class OneFoldforSatellite2 {
+public class OneFoldforSplice {
 
 	private static String data = "";
 	private static String m_S = "KDB"; // -S (NB,KDB,ESKDB)
@@ -33,27 +33,13 @@ public class OneFoldforSatellite2 {
 	private static int m_Tying = 2; // -L
 	private static String dataTain;
 	private static String dataTest;
+	
+	public static LogStirlingGenerator lgcache = null;
 
 	public static void main(String[] args) throws Exception {
 
 		System.out.println(Arrays.toString(args));
 		setOptions(args);
-
-		double m_RMSE = 0;
-		double m_Error = 0;
-		int NTest = 0;
-		double trainTime = 0;
-		long randomSeed = 1990093;
-
-		wdBayesOnlinePYP_MDLR learner = new wdBayesOnlinePYP_MDLR();
-		learner.set_m_S(m_S);
-		learner.setK(m_K);
-		learner.setMEstimation(M_estimation);
-		learner.setGibbsIteration(m_IterGibbs);
-		learner.setBackoff(m_Backoff);
-		learner.setTying(m_Tying);
-		learner.setPrint(m_MVerb);
-
 		
 		File trainFile = new File(dataTain);
 		ArffReader reader = new ArffReader(new BufferedReader(new FileReader(trainFile), BUFFER_SIZE), 100000);
@@ -69,18 +55,41 @@ public class OneFoldforSatellite2 {
 		System.out.println("Attribute size \t" + structure.numAttributes());
 		System.out.println("class size \t" + nc);
 		System.out.println(structure.attribute(structure.classIndex()));
+
+		double m_RMSE = 0;
+		double m_Error = 0;
+		int NTest = 0;
+		double trainTime = 0;
+		long randomSeed = 1990093;
+
+		wdBayesOnlinePYP_MDLR learner = new wdBayesOnlinePYP_MDLR();
+		learner.set_m_S(m_S);
+		learner.setK(m_K);
+		learner.setMEstimation(M_estimation);
+		learner.setGibbsIteration(m_IterGibbs);
+		learner.setBackoff(m_Backoff);
+		learner.setTying(m_Tying);
+		learner.setPrint(m_MVerb);
+		
 		long start = System.currentTimeMillis();
 		wdBayesOnlinePYP_MDLR[] classifiers = new wdBayesOnlinePYP_MDLR[m_EnsembleSize];
 		MDLR[] discretizer = new MDLR[m_EnsembleSize];
-		
-		System.out.println("started learning");
 
-//		// train MDLR and classifier
+		// train MDLR and classifier
+		
+		
+		if(!M_estimation) {
+			// allowing sharing the log stirling numbers cache 
+			lgcache = LogStirlingFactory.newLogStirlingGenerator(N, 0);	
+		}
+		
 		for (int k = 0; k < m_EnsembleSize; k++) {
 			Random generator = new Random(randomSeed);
 			classifiers[k] = (wdBayesOnlinePYP_MDLR) AbstractClassifier.makeCopy(learner);
+			if(!M_estimation) {
+				classifiers[k].setLogStirlingCache(lgcache);
+			}
 			discretizer[k] = classifiers[k].buildClassifier(trainFile, generator);
-			System.out.println("The "+k+"th classifier has been trained");
 			randomSeed++;
 		}
 
@@ -91,8 +100,6 @@ public class OneFoldforSatellite2 {
 		File testFile = new File(dataTest);
 		reader = new ArffReader(new BufferedReader(new FileReader(testFile), BUFFER_SIZE), 100000);
 
-		System.out.println("started testing");
-		
 		start = System.currentTimeMillis();
 		while ((current = reader.readInstance(structure)) != null) {
 			int x_C = (int) current.classValue();// true class label
@@ -196,7 +203,7 @@ public class OneFoldforSatellite2 {
 
 		Utils.checkForRemainingOptions(options);
 	}
-	
+
 	private static int getNumData(File sourceFile, Instances structure) throws FileNotFoundException, IOException {
 		ArffReader reader = new ArffReader(new BufferedReader(new FileReader(sourceFile), BUFFER_SIZE), 100000);
 		int nLines = 0;

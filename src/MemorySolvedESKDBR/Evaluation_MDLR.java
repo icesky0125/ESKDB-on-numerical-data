@@ -1,4 +1,4 @@
-package MomorySolvedESKDBR;
+package MemorySolvedESKDBR;
 
 import java.util.Random;
 

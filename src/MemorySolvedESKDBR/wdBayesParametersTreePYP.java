@@ -1,4 +1,4 @@
-package MomorySolvedESKDBR;
+package MemorySolvedESKDBR;
 
 import hdp.ProbabilityTree;
 import hdp.logStirling.LogStirlingGenerator;

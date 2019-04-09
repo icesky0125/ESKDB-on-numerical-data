@@ -1,7 +1,7 @@
 /*
  *   This program is 5 times 2-fold cross-validation. 
  */
-package MomorySolvedESKDBR;
+package MemorySolvedESKDBR;
 
 import java.io.BufferedReader;
 import java.io.File;
