@@ -242,7 +242,7 @@ public class TwoFoldCVESKDB {
 		
 		m_RMSE = Math.sqrt(m_RMSE / NTest);
 		m_Error = m_Error / NTest;
-		trainTime = trainTime / 10;
+		trainTime = trainTime / (m_nExp*2);
 
 		System.out.println("\n----------------------Bias-Variance Decomposition-------------------");
 		System.out.println("Classifier:\t" + m_S);

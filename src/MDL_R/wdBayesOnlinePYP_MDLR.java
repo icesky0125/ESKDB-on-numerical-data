@@ -137,7 +137,7 @@ public final class wdBayesOnlinePYP_MDLR implements Classifier, java.io.Serializ
 			// sharing one cache for all the trees
 			lgcache = LogStirlingFactory.newLogStirlingGenerator(nInstances, 0);
 
-			for (int u = 0; u < this.nAttributes; u++) {
+			for (int u = 0; u < this.m_Order.length; u++) {
 				ProbabilityTree tree = dParameters_.getPypTrees()[u];
 				tree.setLogStirlingCache(lgcache);
 				tree.smooth();
@@ -212,11 +212,6 @@ public final class wdBayesOnlinePYP_MDLR implements Classifier, java.io.Serializ
 
 	@Override
 	public void buildClassifier(Instances data) throws Exception {
-//		for(int i = 0; i < data.numAttributes(); i++) {
-//			if(data.attribute(i).numValues() == 1) {
-//				data.deleteAttributeAt(i);
-//			}
-//		}
 		
 		ArffSaver arffSaver = new ArffSaver();
 		arffSaver.setInstances(data);
@@ -225,7 +220,7 @@ public final class wdBayesOnlinePYP_MDLR implements Classifier, java.io.Serializ
 		arffSaver.setFile(dataFile);
 		arffSaver.writeBatch();
 
-		this.set_m_S("ESKDB_R");
+//		this.set_m_S("ESKDB_R");
 		buildClassifier(dataFile);
 	}
 }

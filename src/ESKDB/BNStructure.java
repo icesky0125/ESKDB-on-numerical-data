@@ -163,28 +163,86 @@ public final class BNStructure {
 	
 	private void learnStructureKDBForest() {
 		// TODO Auto-generated method stub
-		
-//		double[][] cmi = new double[nAttributes][nAttributes];
-//		double[][] cmiKDBF = new double[nAttributes][nAttributes];
-//		CorrelationMeasures.getCondMutualInf(xxyDist_, cmi);
-//		CorrelationMeasures.getcondMutualInfForKDBForest(xxyDist_, cmiKDBF);
-//		
-//		ArrayList<Integer> order;
-//		for (int i = 0; i < nAttributes; i++) {
-//			order = new ArrayList<Integer>();
-//			order.add(i);
-//			
-//			double[] sum_CMI = new double[this.nAttributes];
-//			while(order.size() < this.nAttributes) {
-//				for(int j = 0; j < this.nAttributes; j++) {
-//					if(order.contains(j)) {
-//						sum_CMI[j] = 0;
-//					}else {
-//						sum_CMI[j] += cmiKDBF[order.get(order.size()-1)][j];
-//					}
-//				}
-//			}
-//		}
+				double[][] cmi = new double[nAttributes][nAttributes];
+				double[][] cmiKDBF = new double[nAttributes][nAttributes];
+				CorrelationMeasures.getCondMutualInf(xxyDist_, cmi);
+				CorrelationMeasures.getcondMutualInfForKDBForest(xxyDist_, cmiKDBF);
+
+				// for(int i = 0; i < cmiKDBF.length; i++){
+				// System.out.println(Arrays.toString(cmiKDBF[i]));
+				// }
+				//
+				// System.out.println();
+				ArrayList<Integer> order;
+
+				for (int i = 0; i < this.nAttributes; i++) {
+					order = new ArrayList<Integer>();
+					order.add(i);
+
+					double[] sum_CMI = new double[this.nAttributes];
+					while (order.size() < this.nAttributes) {
+
+						for (int j = 0; j < this.nAttributes; j++) {
+							if (order.contains(j)) {
+								sum_CMI[j] = 0;
+							} else {
+								sum_CMI[j] += cmiKDBF[order.get(order.size() - 1)][j];
+							}
+						}
+
+						int[] ddd = SUtils.sort(sum_CMI);
+						order.add(ddd[0]);
+					}
+					int[] tempOrder = new int[this.nAttributes];
+					for (int j = 0; j < order.size(); j++) {
+						tempOrder[j] = order.get(j);
+					}
+
+					this.upperOrder.add(tempOrder);
+				}
+
+				for (int i = 0; i < this.upperOrder.size(); i++) {
+					int[] order1 = this.upperOrder.get(i);
+					int[][][] tempParent = new int[this.nAttributes][1][];
+
+					ArrayList<ArrayList<Integer>> m_ancestors = new ArrayList<ArrayList<Integer>>();
+					for (int u = 0; u < nAttributes; u++) {
+						ArrayList<Integer> ancestors = new ArrayList<Integer>();
+						m_ancestors.add(ancestors);
+					}
+
+					for (int u = 0; u < nAttributes; u++) {
+
+						if (u > 0) {
+							// find the first parent with the maximum CMI
+							double[] cmi_values = new double[u];
+							for (int j = 0; j < u; j++) {
+								cmi_values[j] = cmi[order1[u]][order1[j]];
+							}
+							int[] cmiOrder = SUtils.sort(cmi_values);
+							int parent = order1[cmiOrder[0]];
+
+							// find parents in ancestors
+							ArrayList<Integer> ancestors = new ArrayList<Integer>();
+							ancestors.add(parent);
+							ArrayList<Integer> pp = m_ancestors.get(parent);
+							ancestors.addAll(pp);
+
+							int b = Math.min(ancestors.size(), K);
+							tempParent[u][0] = new int[b];
+							tempParent[u][0][0] = parent;
+
+							if (b > 1) {
+								for (int j = 0; j < b - 1; j++) {
+									tempParent[u][0][j + 1] = ancestors.get(j + 1);
+								}
+							}
+							m_ancestors.set(order1[u], ancestors);
+						}
+					}
+
+					this.parentOrder.add(tempParent);
+				}
 	}
 
 	private void learnStructureKDB() {

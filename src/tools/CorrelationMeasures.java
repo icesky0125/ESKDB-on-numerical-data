@@ -212,5 +212,52 @@ public class CorrelationMeasures {
 
 	}
 
+	/**
+	 * __ \ P(c,x1,x2)p(x1) CMI(C;X2|X1)= = /_ P(c,x1,x2) log ----------------
+	 * x1,x2,y P(c,x1)P(x2,x1)
+	 *
+	 */
+	public static void getcondMutualInfForKDBForest(xxyDist xxyDist_, double[][] cmiKDBF) {
+		// TODO Auto-generated method stub
+		int nc = xxyDist_.getNoClasses();
+		int na = xxyDist_.getNoAtts();
+		double N = xxyDist_.getNoData();
 
+		int[] paramsPerAtt = new int[na];
+		for (int u = 0; u < na; u++) {
+			paramsPerAtt[u] = xxyDist_.getNoValues(u);
+		}
+
+		for (int u1 = 1; u1 < na; u1++) {
+			for (int u2 = 0; u2 < u1; u2++) {
+				double mi = 0;
+				double mi2 = 0;
+				for (int u1val = 0; u1val < paramsPerAtt[u1]; u1val++) {
+					for (int u2val = 0; u2val < paramsPerAtt[u2]; u2val++) {
+						for (int c = 0; c < nc; c++) {
+
+							double avvyCount = xxyDist_.getCount(u1, u1val, u2, u2val, c); // p(C,x1,x2)
+							if (avvyCount > 0) {
+								double a = avvyCount;
+								double b = xxyDist_.xyDist_.getCount(u1, u1val);// p(x1)
+								double d = xxyDist_.xyDist_.getCount(u1, u1val, c);// p(c,x1)
+								double e = xxyDist_.getCount(u1, u1val, u2, u2val);// p(x2,x1)
+
+								double mitemp = (a / N) * Math.log((a * b) / (d * e)) / Math.log(2);
+								mi += mitemp;
+
+								double f = xxyDist_.xyDist_.getCount(u2, u2val);// p(x2)
+								double g = xxyDist_.xyDist_.getCount(u2, u2val, c);// p(c,x2)
+								double h = xxyDist_.getCount(u1, u1val, u2, u2val);// p(x1,x2)
+								double mitemp2 = (a / N) * Math.log((a * f) / (g * h)) / Math.log(2);
+								mi2 += mitemp2;
+							}
+						}
+					}
+				}
+				cmiKDBF[u1][u2] = mi;
+				cmiKDBF[u2][u1] = mi2;
+			}
+		}
+	}
 }

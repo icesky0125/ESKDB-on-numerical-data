@@ -10,8 +10,8 @@ import org.apache.commons.math3.util.FastMath;
 import static mltools.MathUtils.*;
 
 public class Concentration {
-	private double priorRate = 1.0;
-	private static final double priorShape = 2.0;
+	private static double priorRate = 1.0;
+	private static double priorShape = 2.0;
 	private double c;
 	ArrayList<Float> logGammaRatioCache;
 	int indexLastValidLogGammaRatio;

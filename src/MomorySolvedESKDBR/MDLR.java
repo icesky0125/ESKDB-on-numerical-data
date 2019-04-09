@@ -1,6 +1,7 @@
-package MDL_R;
+package MomorySolvedESKDBR;
 
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.Random;
 
 import tools.SUtils;
@@ -318,7 +319,6 @@ public class MDLR extends Discretize {
 				if (Utils.sum(informationGain) <= 0) {
 					return null;
 				} else {
-
 					double p = Math.random();
 					int indexIG = SUtils.cumulativeProbability(informationGain, p);
 
@@ -368,5 +368,66 @@ public class MDLR extends Discretize {
 		}
 
 		return cutPoints;
+	}
+
+	public Instance discretize(Instance row) {
+
+		int index = 0;
+	    double[] vals = new double[row.numAttributes()];
+	    // Copy and convert the values
+	    for (int i = 0; i < row.numAttributes(); i++) {
+	      if (m_DiscretizeCols.isInRange(i)
+	        && getInputFormat().attribute(i).isNumeric()) {
+	        int j;
+	        double currentVal = row.value(i);
+	        if (m_CutPoints[i] == null) {
+	          if (row.isMissing(i)) {
+	            vals[index] = Utils.missingValue();
+	          } else {
+	            vals[index] = 0;
+	          }
+	          index++;
+	        } else {
+	          if (!m_MakeBinary) {
+	            if (row.isMissing(i)) {
+	              vals[index] = Utils.missingValue();
+	            } else {
+	              for (j = 0; j < m_CutPoints[i].length; j++) {
+	                if (currentVal <= m_CutPoints[i][j]) {
+	                  break;
+	                }
+	              }
+	              vals[index] = j;
+	            }
+	            index++;
+	          } else {
+	            for (j = 0; j < m_CutPoints[i].length; j++) {
+	              if (row.isMissing(i)) {
+	                vals[index] = Utils.missingValue();
+	              } else if (currentVal <= m_CutPoints[i][j]) {
+	                vals[index] = 0;
+	              } else {
+	                vals[index] = 1;
+	              }
+	              index++;
+	            }
+	          }
+	        }
+	      } else {
+	        vals[index] = row.value(i);
+	        index++;
+	      }
+	    }
+
+	    Instance inst = null;
+	    if (row instanceof SparseInstance) {
+	      inst = new SparseInstance(row.weight(), vals);
+	    } else {
+	      inst = new DenseInstance(row.weight(), vals);
+	    }
+
+//	    copyValues(inst, false, row.dataset(), outputFormatPeek());
+	    
+		return inst;
 	}
 }

@@ -1,4 +1,4 @@
-package MDL_R;
+package MomorySolvedESKDBR;
 
 import java.io.BufferedReader;
 import java.io.File;
@@ -8,6 +8,8 @@ import java.io.IOException;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Random;
+
+import org.apache.commons.math3.random.MersenneTwister;
 
 import ESKDB.wdBayesParametersTree;
 import ESKDB.xxyDist;
@@ -52,26 +54,36 @@ public final class BNStructure_MDLR {
 		}
 
 		xxyDist_ = new xxyDist(m_Instances);
-		if (nInstances > 0) {
-			xxyDist_.addToCount(m_Instances);
-		}
+//		if (nInstances > 0) {
+//			xxyDist_.addToCount(m_Instances);
+//		}
 	}
 
-	public void learnStructure(Instances structure, File sourceFile) throws IOException {
+	public void learnStructure(Instances mInstances, File sourceFile, MDLR discretizer,Random generator) throws IOException {
 
 		// First fill xxYDist; everybody needs it
 		ArffReader reader = new ArffReader(new BufferedReader(new FileReader(sourceFile)), 10000);
+		Instances structure = reader.getStructure();
+		structure.setClassIndex(structure.numAttributes()-1);
+		
 		Instance row;
-
+		// go through the data to update the statistic sufficient counts
 		while ((row = reader.readInstance(structure)) != null) {
-			updateXXYDist(row);
-			xxyDist_.setNoData();
-			xxyDist_.xyDist_.setNoData();
+			Instance discretedRow = discretizer.discretize(row);
+			
+			mInstances.add(discretedRow);
+			mInstances.setClassIndex(mInstances.numAttributes()-1);
+			updateXXYDist(mInstances.lastInstance());
+			mInstances.remove(mInstances.lastInstance());
+			
+			xxyDist_.setNoData(); // N++
+			xxyDist_.xyDist_.setNoData(); //N++
 		}
 
 		m_BestK_ = K;
 		m_BestattIt = nAttributes;
-		learnStructureSKDB_R(structure, sourceFile);
+		
+		learnStructureSKDB_R(mInstances, sourceFile,discretizer,generator);
 
 //		switch (m_S) {
 //		case "NB":
@@ -200,9 +212,12 @@ public final class BNStructure_MDLR {
 				m_Parents, 1);
 
 		ArffReader reader = new ArffReader(new BufferedReader(new FileReader(sourceFile)), 10000);
+		structure = reader.getStructure();
+		structure.setClassIndex(structure.numAttributes()-1);
 		Instance instance;
 		int N = 0;
 		while ((instance = reader.readInstance(structure)) != null) {
+			
 			dParameters_.update(instance);
 			N++;
 		}
@@ -218,6 +233,8 @@ public final class BNStructure_MDLR {
 
 		/* Start the third costly pass through the data */
 		reader = new ArffReader(new BufferedReader(new FileReader(sourceFile)), 10000);
+		structure = reader.getStructure();
+		structure.setClassIndex(structure.numAttributes()-1);
 		while ((instance = reader.readInstance(structure)) != null) {
 			int x_C = (int) instance.classValue();
 
@@ -364,7 +381,7 @@ public final class BNStructure_MDLR {
 		}
 	}
 	
-	private void learnStructureSKDB_R(Instances structure, File sourceFile) throws FileNotFoundException, IOException {
+	private void learnStructureSKDB_R(Instances mInstances, File sourceFile, MDLR discretizer,Random rg) throws FileNotFoundException, IOException {
 		
 		// the difference between SKDB_R and SKDB is the formor random sample the attribute order for SKDB.
 		int m_KDB = m_BestK_;
@@ -374,7 +391,7 @@ public final class BNStructure_MDLR {
 		CorrelationMeasures.getCondMutualInf(xxyDist_, cmi);
 
 		// random sampled attribute order
-		m_Order = sampleReNormalizing(m_Order, mi);
+		m_Order = sampleReNormalizing(m_Order, mi,rg);
 		
 		int negativeIndex = m_Order.length;
 		for(int i = 0; i < m_Order.length; i++) {
@@ -421,10 +438,19 @@ public final class BNStructure_MDLR {
 				m_Parents, 1);
 
 		ArffReader reader = new ArffReader(new BufferedReader(new FileReader(sourceFile)), 10000);
+		Instances structure = reader.getStructure();
+		structure.setClassIndex(structure.numAttributes()-1);
 		Instance instance;
 		int N = 0;
 		while ((instance = reader.readInstance(structure)) != null) {
-			dParameters_.update(instance);
+			Instance discretedRow = discretizer.discretize(instance);
+			
+			mInstances.add(discretedRow);
+			mInstances.setClassIndex(mInstances.numAttributes()-1);
+			dParameters_.update(mInstances.lastInstance());
+			
+			mInstances.remove(mInstances.lastInstance());
+
 			N++;
 		}
 
@@ -439,8 +465,16 @@ public final class BNStructure_MDLR {
 
 		/* Start the third costly pass through the data */
 		reader = new ArffReader(new BufferedReader(new FileReader(sourceFile)), 10000);
+		structure = reader.getStructure();
+		structure.setClassIndex(structure.numAttributes()-1);
 		while ((instance = reader.readInstance(structure)) != null) {
 			int x_C = (int) instance.classValue();
+			
+			Instance discretedRow = discretizer.discretize(instance);
+			
+			mInstances.add(discretedRow);
+			mInstances.setClassIndex(mInstances.numAttributes()-1);
+			instance = mInstances.lastInstance();
 
 			for (int y = 0; y < nc; y++) {
 				posteriorDist[0][y] = dParameters_.ploocv(y, x_C);
@@ -533,18 +567,18 @@ public final class BNStructure_MDLR {
 		m_ParentsTemp = null;
 	}
 	
-	private int[] sampleReNormalizing(int[] tempS, double[] tempCMI) {
+	private int[] sampleReNormalizing(int[] tempS, double[] tempCMI, Random generator) {
 		int[] res = new int[tempCMI.length];
 		for(int i = 0; i < res.length; i++) {
 			res[i] = -1;
 		}
-		long seed = 19900125;
+//		long seed = 19900125;
 		for (int i = 0; i < tempCMI.length; i++) {
 
 			Utils.normalize(tempCMI);
 //			double p = Math.random();
-			seed = seed + i;
-			Random generator = new Random(seed);
+//			seed = seed + i;
+//			Random generator = new Random(seed);
 			double num = generator.nextDouble();
 			int index = cumulativeProbability(tempCMI, num);
 			res[i] = tempS[index];

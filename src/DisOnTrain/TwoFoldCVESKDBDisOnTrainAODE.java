@@ -1,7 +1,7 @@
 /*
  *   This program is 5 times 2-fold cross-validation. 
  */
-package MDL_R;
+package DisOnTrain;
 
 import java.io.BufferedReader;
 import java.io.File;
@@ -11,6 +11,9 @@ import java.io.IOException;
 import java.util.Arrays;
 import java.util.BitSet;
 import org.apache.commons.math3.random.MersenneTwister;
+
+import AODE.AODE;
+import ESKDB.wdBayesOnlinePYP;
 import weka.classifiers.AbstractClassifier;
 import weka.core.Instance;
 import weka.core.Instances;
@@ -20,20 +23,13 @@ import weka.filters.Filter;
 import weka.core.converters.ArffSaver;
 import weka.core.converters.Saver;
 
-public class TwoFoldCVESKDB {
+public class TwoFoldCVESKDBDisOnTrainAODE {
 
 	private static String data = "";
-	private static String m_S = "KDB"; // -S (NB,KDB,ESKDB)
-	private static int m_K = 5; // -K
 	private static boolean m_MVerb = false; // -V
 	private static int m_nExp = 5;
 	public static final int BUFFER_SIZE = 10 * 1024 * 1024; // 100MB
-	private static int m_IterGibbs;
-	private static boolean M_estimation = false; // default: using HDP
-	private static int m_EnsembleSize = 20; // -E
-	private static boolean m_Backoff = false;
-	private static int m_Tying = 2; // -L
-	private static int m_BeginData = 0;
+	private static int m_BeginData = 2;
 
 	public static void main(String[] args) throws Exception {
 
@@ -97,15 +93,8 @@ public class TwoFoldCVESKDB {
 				// Train on Fold 0
 				// ---------------------------------------------------------
 
-				wdBayesOnlinePYP_MDLR learner = new wdBayesOnlinePYP_MDLR();
-				learner.set_m_S(m_S);
-				learner.setK(m_K);
-				learner.setMEstimation(M_estimation);
-				learner.setGibbsIteration(m_IterGibbs);
-				learner.setBackoff(m_Backoff);
-				learner.setTying(m_Tying);
-				learner.setPrint(m_MVerb);
-
+				AODE learner = new AODE();
+				
 				// creating tempFile for train0
 				File trainFile = createTrainTmpFile(sourceFile, structure, test0Indexes);
 				Instances train = readFile2Instances(trainFile);
@@ -116,7 +105,6 @@ public class TwoFoldCVESKDB {
 				Instance current;
 				
 				reader = new ArffReader(new BufferedReader(new FileReader(sourceFile), BUFFER_SIZE), 100000);
-
 				while ((current = reader.readInstance(structure)) != null) {
 					if (test0Indexes.get(lineNo)) {
 						test.add(current);
@@ -125,24 +113,15 @@ public class TwoFoldCVESKDB {
 				}
 
 				long start = System.currentTimeMillis();
-				wdBayesOnlinePYP_MDLR[] classifiers = new wdBayesOnlinePYP_MDLR[m_EnsembleSize];
-				MDLR[] discretizer = new MDLR[m_EnsembleSize];
-				Instances[] allTests = new Instances[m_EnsembleSize];
+				
+				weka.filters.supervised.attribute.Discretize disMDL = new weka.filters.supervised.attribute.Discretize();
+				disMDL.setUseBetterEncoding(true);
+				disMDL.setInputFormat(train);
 
-				// train MDLR and classifier
-				for (int k = 0; k < m_EnsembleSize; k++) {
+				train = Filter.useFilter(train, disMDL);
+				test = Filter.useFilter(test, disMDL);
 
-					discretizer[k] = new MDLR();
-					discretizer[k].setInputFormat(train);
-					discretizer[k].setUseBetterEncoding(true);
-
-					Instances currentTrain = Filter.useFilter(train, discretizer[k]);
-					currentTrain.setClassIndex(currentTrain.numAttributes() - 1);
-					allTests[k] = Filter.useFilter(test, discretizer[k]);
-						
-					classifiers[k] = (wdBayesOnlinePYP_MDLR) AbstractClassifier.makeCopy(learner);
-					classifiers[k].buildClassifier(currentTrain);
-				}
+				learner.buildClassifier(train);
 
 				trainTime += System.currentTimeMillis() - start;
 				if (m_MVerb) {
@@ -159,23 +138,9 @@ public class TwoFoldCVESKDB {
 				int testNum = test.numInstances();
 				for (int j = 0; j < testNum; j++) {
 
-					int x_C = (int) test.get(j).classValue();// true class label
-
-					double[] probs = new double[nc];
-
-					for (int k = 0; k < discretizer.length; k++) {
-
-						Instance currentInst = allTests[k].get(j);// discretizatoion
-						double[] p = classifiers[k].distributionForInstance(currentInst);
-
-						for (int c = 0; c < nc; c++) {
-							probs[c] += p[c];
-						}
-					}
-
-					for (int c = 0; c < nc; c++) {
-						probs[c] /= m_EnsembleSize;
-					}
+					Instance currentInst = test.get(j);
+					int x_C = (int) currentInst.classValue();// true class label
+					double[] probs = learner.distributionForInstance(currentInst);
 
 					// ------------------------------------
 					// Update Error and RMSE
@@ -221,15 +186,8 @@ public class TwoFoldCVESKDB {
 				// ---------------------------------------------------------
 				// Train on Fold 2
 				// ---------------------------------------------------------
-				learner = new wdBayesOnlinePYP_MDLR();
-				learner.set_m_S(m_S);
-				learner.setK(m_K);
-				learner.setMEstimation(M_estimation);
-				learner.setGibbsIteration(m_IterGibbs);
-				learner.setBackoff(m_Backoff);
-				learner.setTying(m_Tying);
-				learner.setPrint(m_MVerb);
-
+				learner = new AODE();
+				
 				// creating tempFile for train0
 				trainFile = createTrainTmpFile(sourceFile, structure, test1Indexes);
 				train = readFile2Instances(trainFile);
@@ -249,42 +207,15 @@ public class TwoFoldCVESKDB {
 //				readInstances2File(test, "test2");
 				start = System.currentTimeMillis();
 
-				classifiers = new wdBayesOnlinePYP_MDLR[m_EnsembleSize];
-				discretizer = new MDLR[m_EnsembleSize];
-				allTests = new Instances[m_EnsembleSize];
-				// train MDLR and classifier
-				for (int k = 0; k < m_EnsembleSize; k++) {
+				disMDL = new weka.filters.supervised.attribute.Discretize();
+				disMDL.setUseBetterEncoding(true);
+				disMDL.setInputFormat(train);
 
-					discretizer[k] = new MDLR();
-					discretizer[k].setInputFormat(train);
-					discretizer[k].setUseBetterEncoding(true);
+				train = Filter.useFilter(train, disMDL);
+				test = Filter.useFilter(test, disMDL);
 
-					Instances currentTrain = Filter.useFilter(train, discretizer[k]);
-					currentTrain.setClassIndex(currentTrain.numAttributes() - 1);
-					allTests[k] = Filter.useFilter(test, discretizer[k]);
-					
-					// one-hot encoding
-//					readInstances2File(currentTrain,"test"+k);
-//					NominalToBinary nominalToBinary = new NominalToBinary();
-//					nominalToBinary.setInputFormat(currentTrain);
-//					String[] options = {"-A"}; // the index(es) of the nominal feature(s)
-//					nominalToBinary.setOptions(options);
-//					currentTrain = Filter.useFilter(currentTrain, nominalToBinary);		
-//					allTests[k] = Filter.useFilter(allTests[k], nominalToBinary);
-//					readInstances2File(currentTrain,"trainOneHot"+k);
-//					readInstances2File(allTests[k],"testOneHot"+k);	
-//					NumericToBinary numeric2binary = new NumericToBinary();
-//					numeric2binary.setInputFormat(currentTrain);
-//					numeric2binary.setOptions(options);
-//					currentTrain = Filter.useFilter(currentTrain, numeric2binary);
-//					readInstances2File(currentTrain,"trainOneHot11"+k);
-//					allTests[k] = Filter.useFilter(allTests[k], numeric2binary);
-//					readInstances2File(currentTrain,"trainOneHot11"+k);
-//					readInstances2File(allTests[k],"testOneHot11"+k);
-					
-					classifiers[k] = (wdBayesOnlinePYP_MDLR) AbstractClassifier.makeCopy(learner);
-					classifiers[k].buildClassifier(currentTrain);
-				}
+				learner.buildClassifier(train);
+
 				trainTime += System.currentTimeMillis() - start;
 
 				if (m_MVerb) {
@@ -298,23 +229,9 @@ public class TwoFoldCVESKDB {
 				testNum = test.numInstances();
 				for (int j = 0; j < testNum; j++) {
 
-					int x_C = (int) test.get(j).classValue();// true class label
-
-					double[] probs = new double[nc];
-
-					for (int k = 0; k < m_EnsembleSize; k++) {
-
-						Instance currentInst = allTests[k].get(j);
-						double[] p = classifiers[k].distributionForInstance(currentInst);
-
-						for (int c = 0; c < nc; c++) {
-							probs[c] += p[c];
-						}
-					}
-
-					for (int c = 0; c < nc; c++) {
-						probs[c] /= m_EnsembleSize;
-					}
+					Instance currentInst = test.get(j);
+					int x_C = (int) currentInst.classValue();// true class label
+					double[] probs = learner.distributionForInstance(currentInst);
 
 					// ------------------------------------
 					// Update Error and RMSE
@@ -354,7 +271,7 @@ public class TwoFoldCVESKDB {
 
 			m_RMSE = Math.sqrt(m_RMSE / NTest);
 			m_Error = m_Error / NTest;
-			trainTime = trainTime / 10;
+			trainTime = trainTime / (m_nExp*2);
 
 //		System.out.println("\n----------------------Bias-Variance Decomposition-------------------");
 //		System.out.println("Classifier:\t" + m_S);
@@ -377,37 +294,12 @@ public class TwoFoldCVESKDB {
 		}
 
 		m_MVerb = Utils.getFlag('V', options);
-		M_estimation = Utils.getFlag('M', options);
-		m_Backoff = Utils.getFlag('B', options);
-
-		string = Utils.getOption('S', options);
-		if (string.length() != 0) {
-			m_S = string;
-		}
-
-		string = Utils.getOption('K', options);
-		if (string.length() != 0) {
-			m_K = Integer.parseInt(string);
-		}
-
-		String ML = Utils.getOption('L', options);
-		if (ML.length() != 0) {
-			m_Tying = Integer.parseInt(ML);
-		}
-
-		string = Utils.getOption('E', options);
-		if (string.length() != 0) {
-			m_EnsembleSize = Integer.parseInt(string);
-		}
+		
+		
 
 		string = Utils.getOption('X', options);
 		if (string.length() != 0) {
 			m_nExp = Integer.valueOf(string);
-		}
-
-		string = Utils.getOption('I', options);
-		if (string.length() != 0) {
-			m_IterGibbs = Integer.parseInt(string);
 		}
 
 		string = Utils.getOption('R', options);
