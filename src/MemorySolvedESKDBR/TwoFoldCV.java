@@ -13,6 +13,9 @@ import java.util.BitSet;
 import java.util.Random;
 
 import org.apache.commons.math3.random.MersenneTwister;
+
+import hdp.logStirling.LogStirlingFactory;
+import hdp.logStirling.LogStirlingGenerator;
 import weka.classifiers.AbstractClassifier;
 import weka.core.Instance;
 import weka.core.Instances;
@@ -34,6 +37,8 @@ public class TwoFoldCV {
 	private static int m_EnsembleSize = 20; // -E
 	private static boolean m_Backoff = false;
 	private static int m_Tying = 2; // -L
+
+	public static LogStirlingGenerator lgcache = null;
 
 	public static void main(String[] args) throws Exception {
 
@@ -67,6 +72,10 @@ public class TwoFoldCV {
 		System.out.println("Attribute size \t" + structure.numAttributes());
 		System.out.println("class size \t" + nc);
 		System.out.print(strData + "\t");
+		
+		if (!M_estimation) {
+			lgcache = LogStirlingFactory.newLogStirlingGenerator(N, 0);
+		}
 
 		double m_RMSE = 0;
 		double m_Error = 0;
@@ -116,6 +125,11 @@ public class TwoFoldCV {
 			for (int k = 0; k < m_EnsembleSize; k++) {
 				Random generator = new Random(randomSeed);
 				classifiers[k] = (wdBayesOnlinePYP_MDLR) AbstractClassifier.makeCopy(learner);
+				
+				if (!M_estimation) {
+					classifiers[k].setLogStirlingCache(lgcache);
+				}
+				
 				discretizer[k] = classifiers[k].buildClassifier(trainFile,generator);
 				randomSeed++;
 			}
@@ -143,9 +157,9 @@ public class TwoFoldCV {
 					double[] probs = new double[nc];
 					
 					for (int k = 0; k < discretizer.length; k++) {
-						Instance discretizedRow = discretizer[k].discretize(current);
+						current = discretizer[k].discretize(current);
 						
-						double[] p = classifiers[k].distributionForInstance(discretizedRow);
+						double[] p = classifiers[k].distributionForInstance(current);
 
 						for (int c = 0; c < nc; c++) {
 							probs[c] += p[c];
@@ -220,8 +234,12 @@ public class TwoFoldCV {
 			for (int k = 0; k < m_EnsembleSize; k++) {
 				Random generator = new Random(seed);
 				classifiers[k] = (wdBayesOnlinePYP_MDLR) AbstractClassifier.makeCopy(learner);
+				
+				if (!M_estimation) {
+					classifiers[k].setLogStirlingCache(lgcache);
+				}
+				
 				discretizer[k] = classifiers[k].buildClassifier(trainFile,generator);
-			
 				randomSeed++;
 			}
 
@@ -247,9 +265,9 @@ public class TwoFoldCV {
 					double[] probs = new double[nc];
 					
 					for (int k = 0; k < discretizer.length; k++) {
-						Instance discretizedRow = discretizer[k].discretize(current);
+						current = discretizer[k].discretize(current);
 						
-						double[] p = classifiers[k].distributionForInstance(discretizedRow);
+						double[] p = classifiers[k].distributionForInstance(current);
 
 						for (int c = 0; c < nc; c++) {
 							probs[c] += p[c];

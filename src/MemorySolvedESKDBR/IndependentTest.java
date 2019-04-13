@@ -15,11 +15,9 @@ import weka.core.Instance;
 import weka.core.Instances;
 import weka.core.Utils;
 import weka.core.converters.ArffLoader.ArffReader;
-import weka.filters.Filter;
-import weka.core.converters.ArffSaver;
-import weka.core.converters.Saver;
 
-public class OneFoldforSplice {
+
+public class IndependentTest {
 
 	private static String data = "";
 	private static String m_S = "KDB"; // -S (NB,KDB,ESKDB)
@@ -54,7 +52,7 @@ public class OneFoldforSplice {
 		System.out.println("data size \t" + N);
 		System.out.println("Attribute size \t" + structure.numAttributes());
 		System.out.println("class size \t" + nc);
-		System.out.println("class values:\t"+structure.attribute(structure.classIndex()));
+//		System.out.println("class values:\t"+structure.attribute(structure.classIndex()));
 		
 		if(!M_estimation) {
 			// allowing sharing the log stirling numbers cache 
@@ -81,7 +79,8 @@ public class OneFoldforSplice {
 		wdBayesOnlinePYP_MDLR[] classifiers = new wdBayesOnlinePYP_MDLR[m_EnsembleSize];
 		MDLR[] discretizer = new MDLR[m_EnsembleSize];
 
-		System.out.println("Started learning");
+		System.out.println("\nStarted learning");
+		
 		// train MDLR and classifier
 		for (int k = 0; k < m_EnsembleSize; k++) {
 			Random generator = new Random(randomSeed);
@@ -91,7 +90,7 @@ public class OneFoldforSplice {
 			}
 			discretizer[k] = classifiers[k].buildClassifier(trainFile, generator);
 			randomSeed++;
-			System.out.println("The "+k+"th SKDB classifier has been built");
+			System.out.println("The "+k+"th SKDB classifier has been built and smoothed");
 		}
 
 		trainTime += System.currentTimeMillis() - start;
@@ -102,8 +101,13 @@ public class OneFoldforSplice {
 		reader = new ArffReader(new BufferedReader(new FileReader(testFile), BUFFER_SIZE), 100000);
 
 		start = System.currentTimeMillis();
-		System.out.println("Started testing");
+		System.out.println("\nStarted testing");
+		
+		System.out.println("testID:\tProb(0)\tProb(1)\tPrediction\tTrueClass");
+		
+		
 		Instance row;
+		int testIndex = 0;
 		while ((current = reader.readInstance(structure)) != null) {
 			int x_C = (int) current.classValue();// true class label
 			double[] probs = new double[nc];
@@ -148,6 +152,14 @@ public class OneFoldforSplice {
 				m_Error += 1;
 			}
 			NTest++;
+			
+			String[] probsss = new String[probs.length];
+			for(int z = 0; z < probs.length; z++) {
+				probsss[z] = Utils.doubleToString(probs[z], 6,3);
+			}
+			System.out.println("test example "+testIndex +":\t"+probsss[0]+"\t"+probsss[1]+"\t"+pred+"\t"+x_C);
+			
+			testIndex++;
 		}
 
 		m_RMSE = Math.sqrt(m_RMSE / NTest);

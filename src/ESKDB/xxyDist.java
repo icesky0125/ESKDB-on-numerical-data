@@ -81,7 +81,8 @@ public class xxyDist {
 	public void update(Instance inst) {		
 		xyDist_.update(inst);
 
-		int x_C = (int) inst.classValue();
+//		int x_C = (int) inst.classValue();
+		int x_C = (int) inst.value(inst.numAttributes()-1);
 
 		for (int u1 = 1; u1 < n; u1++) {
 			int x_u1 = (int) inst.value(u1);

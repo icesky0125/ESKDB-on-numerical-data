@@ -13,12 +13,14 @@ import java.util.BitSet;
 import java.util.Random;
 
 import org.apache.commons.math3.random.MersenneTwister;
+
+import hdp.logStirling.LogStirlingFactory;
+import hdp.logStirling.LogStirlingGenerator;
 import weka.classifiers.AbstractClassifier;
 import weka.core.Instance;
 import weka.core.Instances;
 import weka.core.Utils;
 import weka.core.converters.ArffLoader.ArffReader;
-import weka.filters.Filter;
 import weka.core.converters.ArffSaver;
 import weka.core.converters.Saver;
 
@@ -36,6 +38,8 @@ public class TwoFoldCVESKDB {
 	private static boolean m_Backoff = false;
 	private static int m_Tying = 2; // -L
 	private static int m_BeginData = 0;
+
+	public static LogStirlingGenerator lgcache = null;
 
 	public static void main(String[] args) throws Exception {
 
@@ -65,14 +69,19 @@ public class TwoFoldCVESKDB {
 			Instances structure = reader.getStructure();
 			structure.setClassIndex(structure.numAttributes() - 1);
 			int nc = structure.numClasses();
-//			int N = getNumData(sourceFile, structure);
+			int N = getNumData(sourceFile, structure);
 
-			String strData = sourceFile.getName().substring(sourceFile.getName().lastIndexOf("/") + 1, sourceFile.getName().lastIndexOf("."));
+			String strData = sourceFile.getName().substring(sourceFile.getName().lastIndexOf("/") + 1,
+					sourceFile.getName().lastIndexOf("."));
 //		System.out.println("Dataset : " + strData);
 //		System.out.println("data size \t" + N);
 //		System.out.println("Attribute size \t" + structure.numAttributes());
 //		System.out.println("class size \t" + nc);
 			System.out.print(strData + "\t");
+
+			if (!M_estimation) {
+				lgcache = LogStirlingFactory.newLogStirlingGenerator(N, 0);
+			}
 
 			double m_RMSE = 0;
 			double m_Error = 0;
@@ -81,7 +90,7 @@ public class TwoFoldCVESKDB {
 			double trainTime = 0;
 
 			long randomSeed = 1990093;
-			
+
 			if (m_MVerb) {
 				System.out.println("A 5 times 2-fold cross-validation will be started.");
 			}
@@ -109,20 +118,25 @@ public class TwoFoldCVESKDB {
 				learner.setBackoff(m_Backoff);
 				learner.setTying(m_Tying);
 				learner.setPrint(m_MVerb);
-				
+
 				// creating tempFile for train0
 				File trainFile = createTrainTmpFile(sourceFile, structure, test0Indexes);
-				
+
 				long start = System.currentTimeMillis();
 				wdBayesOnlinePYP_MDLR[] classifiers = new wdBayesOnlinePYP_MDLR[m_EnsembleSize];
 				MDLR[] discretizer = new MDLR[m_EnsembleSize];
-				
+
 				// train MDLR and classifier
-				
+
 				for (int k = 0; k < m_EnsembleSize; k++) {
 					Random generator = new Random(randomSeed);
 					classifiers[k] = (wdBayesOnlinePYP_MDLR) AbstractClassifier.makeCopy(learner);
-					discretizer[k] = classifiers[k].buildClassifier(trainFile,generator);
+
+					if (!M_estimation) {
+						classifiers[k].setLogStirlingCache(lgcache);
+					}
+
+					discretizer[k] = classifiers[k].buildClassifier(trainFile, generator);
 					randomSeed++;
 				}
 
@@ -140,28 +154,28 @@ public class TwoFoldCVESKDB {
 				Instance current;
 				int thisNTest = 0;
 				reader = new ArffReader(new BufferedReader(new FileReader(sourceFile), BUFFER_SIZE), 100000);
-				
+
 				start = System.currentTimeMillis();
 				while ((current = reader.readInstance(structure)) != null) {
 //					System.out.println(current.toString());
 					if (test0Indexes.get(lineNo)) {
 						int x_C = (int) current.classValue();// true class label
 						double[] probs = new double[nc];
-						
+
 						for (int k = 0; k < discretizer.length; k++) {
-							Instance discretizedRow = discretizer[k].discretize(current);
-							
-							double[] p = classifiers[k].distributionForInstance(discretizedRow);
+							current = discretizer[k].discretize(current);
+
+							double[] p = classifiers[k].distributionForInstance(current);
 
 							for (int c = 0; c < nc; c++) {
 								probs[c] += p[c];
 							}
 						}
-						
+
 						for (int c = 0; c < nc; c++) {
 							probs[c] /= m_EnsembleSize;
 						}
-						
+
 						// ------------------------------------
 						// Update Error and RMSE
 						// ------------------------------------
@@ -221,13 +235,18 @@ public class TwoFoldCVESKDB {
 				trainFile = createTrainTmpFile(sourceFile, structure, test1Indexes);
 				classifiers = new wdBayesOnlinePYP_MDLR[m_EnsembleSize];
 				discretizer = new MDLR[m_EnsembleSize];
-				
+
 				start = System.currentTimeMillis();
 				for (int k = 0; k < m_EnsembleSize; k++) {
 					Random generator = new Random(seed);
 					classifiers[k] = (wdBayesOnlinePYP_MDLR) AbstractClassifier.makeCopy(learner);
-					discretizer[k] = classifiers[k].buildClassifier(trainFile,generator);
-				
+					
+					if (!M_estimation) {
+						classifiers[k].setLogStirlingCache(lgcache);
+					}
+					
+					discretizer[k] = classifiers[k].buildClassifier(trainFile, generator);
+
 					randomSeed++;
 				}
 
@@ -239,7 +258,7 @@ public class TwoFoldCVESKDB {
 				// ---------------------------------------------------------
 				// Test on Fold 2
 				// ---------------------------------------------------------
-				
+
 				thisNTest = 0;
 				lineNo = 0;
 				reader = new ArffReader(new BufferedReader(new FileReader(sourceFile), BUFFER_SIZE), 100000);
@@ -248,24 +267,24 @@ public class TwoFoldCVESKDB {
 //				start = System.currentTimeMillis();
 				while ((current = reader.readInstance(structure)) != null) {
 					if (test1Indexes.get(lineNo)) {
-						
+
 						int x_C = (int) current.classValue();// true class label
 						double[] probs = new double[nc];
-						
+
 						for (int k = 0; k < discretizer.length; k++) {
-							Instance discretizedRow = discretizer[k].discretize(current);
-							
-							double[] p = classifiers[k].distributionForInstance(discretizedRow);
+							current = discretizer[k].discretize(current);
+
+							double[] p = classifiers[k].distributionForInstance(current);
 
 							for (int c = 0; c < nc; c++) {
 								probs[c] += p[c];
 							}
 						}
-						
+
 						for (int c = 0; c < nc; c++) {
 							probs[c] /= m_EnsembleSize;
 						}
-						
+
 						// ------------------------------------
 						// Update Error and RMSE
 						// ------------------------------------
@@ -299,7 +318,7 @@ public class TwoFoldCVESKDB {
 							"Testing fold 2 result - RMSE = " + Utils.doubleToString(Math.sqrt(m_RMSE / NTest), 6, 4)
 									+ "\t0-1 Loss = " + Utils.doubleToString(m_Error / NTest, 6, 4));
 				}
-				
+
 				if (Math.abs(thisNTest - test0Indexes.cardinality()) > 1) {
 					System.err.println("no! " + thisNTest + "\t" + test0Indexes.cardinality());
 				}
@@ -317,8 +336,8 @@ public class TwoFoldCVESKDB {
 //		System.out.println("RMSE : " + Utils.doubleToString(m_RMSE, 6,4));
 //		System.out.println("Error : " + Utils.doubleToString(m_Error, 6, 4));
 //		System.out.println("Training time : " + Utils.doubleToString(trainTime, 6, 0));
-			System.out.println("\t"+
-					Utils.doubleToString(m_RMSE, 6, 4) + "\t" + Utils.doubleToString(m_Error, 6, 4) + '\t' + trainTime);
+			System.out.println("\t" + Utils.doubleToString(m_RMSE, 6, 4) + "\t" + Utils.doubleToString(m_Error, 6, 4)
+					+ '\t' + trainTime);
 		}
 	}
 
@@ -367,7 +386,7 @@ public class TwoFoldCVESKDB {
 
 		string = Utils.getOption('R', options);
 		if (string.length() != 0) {
-			m_BeginData  = Integer.parseInt(string);
+			m_BeginData = Integer.parseInt(string);
 		}
 
 		Utils.checkForRemainingOptions(options);
@@ -420,7 +439,7 @@ public class TwoFoldCVESKDB {
 	}
 
 	public static File createTrainTmpFile(File sourceFile, Instances structure, BitSet testIndexes) throws IOException {
-		File out = File.createTempFile(sourceFile+"train-", ".arff");
+		File out = File.createTempFile(sourceFile + "train-", ".arff");
 		out.deleteOnExit();
 		ArffSaver fileSaver = new ArffSaver();
 		fileSaver.setFile(out);

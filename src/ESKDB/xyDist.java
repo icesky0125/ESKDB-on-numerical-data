@@ -71,7 +71,8 @@ public class xyDist {
 	}
 
 	public void update(Instance inst) {
-		int x_C = (int) inst.classValue();
+//		int x_C = (int) inst.classValue();
+		int x_C = (int) inst.value(inst.numAttributes()-1);
 		classCounts_[x_C]++;		
 
 		for (int u1 = 0; u1 < n; u1++) {

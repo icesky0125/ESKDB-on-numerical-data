@@ -1,0 +1,1 @@
+[-t, SpliceTrain.arff, -T, SpliceTest.arff, -K, 5, -S, SKDB_R, -I, 1000, -L, 2, -E, 10]

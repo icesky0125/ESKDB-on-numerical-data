@@ -73,7 +73,8 @@ public class wdBayesParametersTreePYP {
 			int nParents = (parents[u] == null) ? 0 : parents[u].length;
 			int[] datapoint = new int[nParents + 2];
 			datapoint[0] = (int) instance.value(order[u]);
-			datapoint[1] = (int) (int) instance.classValue();
+			datapoint[1] = (int) (int) instance.value(instance.numAttributes()-1);
+//			datapoint[1] = (int) (int) instance.classValue();
 			for (int p = 0; p < nParents; p++) {
 				datapoint[2 + p] = (int) instance.value(parents[u][p]);
 			}

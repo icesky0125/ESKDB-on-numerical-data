@@ -1,0 +1,16 @@
+[-t, /Users/hezhang/eclipse-workspace/train.arff, -T, test.arff, -K, -S, SKDB_R, -I, 1000, -L, 2, -E, 10]
+Dataset : train
+data size 	1864
+Attribute size 	85
+class size 	2
+Started learning
+The 0th SKDB classifier has been built and smoothed
+The 1th SKDB classifier has been built and smoothed
+The 2th SKDB classifier has been built and smoothed
+The 3th SKDB classifier has been built and smoothed
+The 4th SKDB classifier has been built and smoothed
+The 5th SKDB classifier has been built and smoothed
+The 6th SKDB classifier has been built and smoothed
+The 7th SKDB classifier has been built and smoothed
+The 8th SKDB classifier has been built and smoothed
+The 9th SKDB classifier has been built and smoothed

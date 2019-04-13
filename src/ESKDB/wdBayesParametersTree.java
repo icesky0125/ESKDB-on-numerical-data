@@ -104,7 +104,9 @@ public class wdBayesParametersTree {
 		if(classCounts == null){
 			classCounts = new double[nc];
 		}
-		classCounts[(int) instance.classValue()]++;
+		int x_C = (int) instance.value(instance.numAttributes()-1);
+		classCounts[x_C]++;
+//		classCounts[(int) instance.classValue()]++;
 
 		for (int u = 0; u < this.order.length; u++) {
 			updateAttributeTrie(instance, u, order[u], parents[u]);
@@ -115,7 +117,8 @@ public class wdBayesParametersTree {
 
 	public void updateAttributeTrie(Instance instance, int i, int u, int[] lparents) {
 
-		int x_C = (int) instance.classValue();
+//		int x_C = (int) instance.classValue();
+		int x_C = (int) instance.value(instance.numAttributes()-1);
 		int x_u = (int) instance.value(u);		
 
 		wdBayesNode_[i].incrementXYCount(x_u, x_C);	
@@ -226,7 +229,8 @@ public class wdBayesParametersTree {
 
 	public void updateClassDistributionloocv(double[][] classDist, int i, int u, Instance instance, int m_KDB) {
 
-		int x_C = (int) instance.classValue();
+//		int x_C = (int) instance.classValue();
+		int x_C = (int) instance.value(instance.numAttributes()-1);
 		int uval = (int) instance.value(u);
 
 		wdBayesNode pt = wdBayesNode_[i];
@@ -315,7 +319,8 @@ public class wdBayesParametersTree {
 
 	public void updateClassDistributionloocv2(double[][] posteriorDist, int i, int u, Instance instance, int m_KDB) {
 
-		int x_C = (int) instance.classValue();
+//		int x_C = (int) instance.classValue();
+		int x_C = (int) instance.value(instance.numAttributes()-1);
 
 		wdBayesNode pt = wdBayesNode_[i];
 		int att = pt.att;

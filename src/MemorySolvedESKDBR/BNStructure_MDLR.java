@@ -8,9 +8,6 @@ import java.io.IOException;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Random;
-
-import org.apache.commons.math3.random.MersenneTwister;
-
 import ESKDB.wdBayesParametersTree;
 import ESKDB.xxyDist;
 import tools.CorrelationMeasures;
@@ -59,7 +56,7 @@ public final class BNStructure_MDLR {
 //		}
 	}
 
-	public void learnStructure(Instances mInstances, File sourceFile, MDLR discretizer,Random generator) throws IOException {
+	public void learnStructure(File sourceFile, MDLR discretizer,Random generator) throws IOException {
 
 		// First fill xxYDist; everybody needs it
 		ArffReader reader = new ArffReader(new BufferedReader(new FileReader(sourceFile)), 10000);
@@ -67,14 +64,9 @@ public final class BNStructure_MDLR {
 		structure.setClassIndex(structure.numAttributes()-1);
 		
 		Instance row;
-		// go through the data to update the statistic sufficient counts
 		while ((row = reader.readInstance(structure)) != null) {
-			Instance discretedRow = discretizer.discretize(row);
-			
-			mInstances.add(discretedRow);
-			mInstances.setClassIndex(mInstances.numAttributes()-1);
-			updateXXYDist(mInstances.lastInstance());
-			mInstances.remove(mInstances.lastInstance());
+			row = discretizer.discretize(row);
+			updateXXYDist(row);
 			
 			xxyDist_.setNoData(); // N++
 			xxyDist_.xyDist_.setNoData(); //N++
@@ -83,7 +75,7 @@ public final class BNStructure_MDLR {
 		m_BestK_ = K;
 		m_BestattIt = nAttributes;
 		
-		learnStructureSKDB_R(mInstances, sourceFile,discretizer,generator);
+		learnStructureSKDB_R(sourceFile,discretizer,generator);
 
 //		switch (m_S) {
 //		case "NB":
@@ -381,7 +373,7 @@ public final class BNStructure_MDLR {
 		}
 	}
 	
-	private void learnStructureSKDB_R(Instances mInstances, File sourceFile, MDLR discretizer,Random rg) throws FileNotFoundException, IOException {
+	private void learnStructureSKDB_R(File sourceFile, MDLR discretizer,Random rg) throws FileNotFoundException, IOException {
 		
 		// the difference between SKDB_R and SKDB is the formor random sample the attribute order for SKDB.
 		int m_KDB = m_BestK_;
@@ -443,14 +435,8 @@ public final class BNStructure_MDLR {
 		Instance instance;
 		int N = 0;
 		while ((instance = reader.readInstance(structure)) != null) {
-			Instance discretedRow = discretizer.discretize(instance);
-			
-			mInstances.add(discretedRow);
-			mInstances.setClassIndex(mInstances.numAttributes()-1);
-			dParameters_.update(mInstances.lastInstance());
-			
-			mInstances.remove(mInstances.lastInstance());
-
+			instance = discretizer.discretize(instance);
+			dParameters_.update(instance);
 			N++;
 		}
 
@@ -470,11 +456,7 @@ public final class BNStructure_MDLR {
 		while ((instance = reader.readInstance(structure)) != null) {
 			int x_C = (int) instance.classValue();
 			
-			Instance discretedRow = discretizer.discretize(instance);
-			
-			mInstances.add(discretedRow);
-			mInstances.setClassIndex(mInstances.numAttributes()-1);
-			instance = mInstances.lastInstance();
+			instance = discretizer.discretize(instance);
 
 			for (int y = 0; y < nc; y++) {
 				posteriorDist[0][y] = dParameters_.ploocv(y, x_C);
@@ -503,6 +485,7 @@ public final class BNStructure_MDLR {
 					foldLossFunctallK_[k][u] += error * error;
 				}
 			}
+			
 		}
 
 		/* Start the book keeping, select the best k and best attributes */
@@ -572,13 +555,10 @@ public final class BNStructure_MDLR {
 		for(int i = 0; i < res.length; i++) {
 			res[i] = -1;
 		}
-//		long seed = 19900125;
+
 		for (int i = 0; i < tempCMI.length; i++) {
 
 			Utils.normalize(tempCMI);
-//			double p = Math.random();
-//			seed = seed + i;
-//			Random generator = new Random(seed);
 			double num = generator.nextDouble();
 			int index = cumulativeProbability(tempCMI, num);
 			res[i] = tempS[index];

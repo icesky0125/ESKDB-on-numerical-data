@@ -76,14 +76,15 @@ public final class wdBayesOnlinePYP_MDLR implements Classifier, java.io.Serializ
 
 		// go through the data to get the training size
 		nInstances= getNumData(sourceFile);
-		
-		// go through the data to get the subset to sample for the cut points
+
 		Instances trainFordisc = structure;
+		reader = new ArffReader(new BufferedReader(new FileReader(sourceFile), BUFFER_SIZE), 10000);
+		structure = reader.getStructure();
 		if(nInstances <= 1000000) {
 //			// load all example to find the cut points
-			Instance row1;
-			while ((row1 = reader.readInstance(structure)) != null) {
-				trainFordisc.add(row1); 
+			Instance row;
+			while ((row = reader.readInstance(structure)) != null) {
+				trainFordisc.add(row); 
 			}
 		}else {
 //			// load 100,000 to find the cut points
@@ -95,8 +96,6 @@ public final class wdBayesOnlinePYP_MDLR implements Classifier, java.io.Serializ
 				}
 			}
 		}
-//
-//		System.out.println("train for disc: "+trainFordisc.numInstances());
 		
 		// find cut points based on trainForDisc
 		MDLR discretizer = new MDLR();
@@ -105,10 +104,7 @@ public final class wdBayesOnlinePYP_MDLR implements Classifier, java.io.Serializ
 		Instances m_Instances = Filter.useFilter(trainFordisc, discretizer);	// here m_Instances is just the data in trainFordisc
 		
 		// free some memory
-		int num = m_Instances.numInstances();
-		for(int i = num-1; i >=0; i--) {
-			m_Instances.remove(i);
-		}
+		m_Instances.clear();
 		trainFordisc = null;
 		
 		paramsPerAtt = new int[nAttributes + 1];// including class
@@ -117,12 +113,7 @@ public final class wdBayesOnlinePYP_MDLR implements Classifier, java.io.Serializ
 		}
 		
 		bn = new BNStructure_MDLR(m_Instances, m_S, m_KDB, paramsPerAtt);
-		bn.learnStructure(m_Instances, sourceFile, discretizer, generator);
-		
-		num = m_Instances.numInstances();
-		for(int i = num-1; i >=0; i--) {
-			m_Instances.remove(i);
-		}
+		bn.learnStructure(sourceFile, discretizer, generator);
 
 		m_Order = bn.get_Order();
 		m_Parents = bn.get_Parents();
@@ -144,19 +135,14 @@ public final class wdBayesOnlinePYP_MDLR implements Classifier, java.io.Serializ
 
 		dParameters_ = new wdBayesParametersTreePYP(nc, paramsPerAtt, m_Order, m_Parents, m_IterGibbs, m_Tying);
 		
+		
 		// go through the data to update the tree
 		Instance row;
 		this.nInstances = 0;
 		reader = new ArffReader(new BufferedReader(new FileReader(sourceFile), BUFFER_SIZE), 10000);
-		structure = reader.getStructure();
-		structure.setClassIndex(structure.numAttributes()-1);
 		while ((row = reader.readInstance(structure)) != null) {
-			Instance discretizedRow = discretizer.discretize(row);
-			m_Instances.add(discretizedRow);
-			m_Instances.setClassIndex(m_Instances.numAttributes()-1);
-			dParameters_.update(m_Instances.lastInstance());
-			m_Instances.remove(m_Instances.lastInstance());
-			
+			row = discretizer.discretize(row);	
+			dParameters_.update(row);	
 			this.nInstances++;
 		}
 
