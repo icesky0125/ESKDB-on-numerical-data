@@ -10,10 +10,7 @@ import java.io.FileReader;
 import java.io.IOException;
 import java.util.Arrays;
 import java.util.BitSet;
-import java.util.Random;
-
 import org.apache.commons.math3.random.MersenneTwister;
-
 import hdp.logStirling.LogStirlingFactory;
 import hdp.logStirling.LogStirlingGenerator;
 import weka.classifiers.AbstractClassifier;

@@ -129,13 +129,13 @@ public class TwoFoldCVESKDB {
 				// train MDLR and classifier
 
 				for (int k = 0; k < m_EnsembleSize; k++) {
-					Random generator = new Random(randomSeed);
+//					Random generator = new Random(randomSeed);
 					classifiers[k] = (wdBayesOnlinePYP_MDLR) AbstractClassifier.makeCopy(learner);
 
 					if (!M_estimation) {
 						classifiers[k].setLogStirlingCache(lgcache);
 					}
-
+				
 					discretizer[k] = classifiers[k].buildClassifier(trainFile,randomSeed);
 					randomSeed++;
 				}
@@ -163,9 +163,9 @@ public class TwoFoldCVESKDB {
 						double[] probs = new double[nc];
 
 						for (int k = 0; k < discretizer.length; k++) {
-							current = discretizer[k].discretize(current);
+							Instance currentTest = discretizer[k].discretize(current);
 
-							double[] p = classifiers[k].distributionForInstance(current);
+							double[] p = classifiers[k].distributionForInstance(currentTest);
 
 							for (int c = 0; c < nc; c++) {
 								probs[c] += p[c];
@@ -238,7 +238,7 @@ public class TwoFoldCVESKDB {
 
 				start = System.currentTimeMillis();
 				for (int k = 0; k < m_EnsembleSize; k++) {
-					Random generator = new Random(randomSeed);
+//					Random generator = new Random(randomSeed);
 					classifiers[k] = (wdBayesOnlinePYP_MDLR) AbstractClassifier.makeCopy(learner);
 					
 					if (!M_estimation) {
@@ -272,9 +272,9 @@ public class TwoFoldCVESKDB {
 						double[] probs = new double[nc];
 
 						for (int k = 0; k < discretizer.length; k++) {
-							current = discretizer[k].discretize(current);
+							Instance currentTest = discretizer[k].discretize(current);
 
-							double[] p = classifiers[k].distributionForInstance(current);
+							double[] p = classifiers[k].distributionForInstance(currentTest);
 
 							for (int c = 0; c < nc; c++) {
 								probs[c] += p[c];
@@ -328,7 +328,7 @@ public class TwoFoldCVESKDB {
 
 			m_RMSE = Math.sqrt(m_RMSE / NTest);
 			m_Error = m_Error / NTest;
-			trainTime = trainTime / 10;
+			trainTime = trainTime / (m_nExp*2);
 
 //		System.out.println("\n----------------------Bias-Variance Decomposition-------------------");
 //		System.out.println("Classifier:\t" + m_S);

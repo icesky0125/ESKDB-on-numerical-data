@@ -83,7 +83,7 @@ public class IndependentTest {
 		
 		// train MDLR and classifier
 		for (int k = 0; k < m_EnsembleSize; k++) {
-			Random generator = new Random(randomSeed);
+//			Random generator = new Random(randomSeed);
 			classifiers[k] = (wdBayesOnlinePYP_MDLR) AbstractClassifier.makeCopy(learner);
 			if(!M_estimation) {
 				classifiers[k].setLogStirlingCache(lgcache);

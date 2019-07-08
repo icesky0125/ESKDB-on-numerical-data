@@ -43,6 +43,8 @@ public class OneFoldforSplice {
 		double m_Error = 0;
 		int NTest = 0;
 		double trainTime = 0;
+		
+		long randomSeed = 1990093;
 
 		wdBayesOnlinePYP_MDLR learner = new wdBayesOnlinePYP_MDLR();
 		learner.set_m_S(m_S);
@@ -64,22 +66,26 @@ public class OneFoldforSplice {
 		System.out.println("started to train ESKDB");
 		long start = System.currentTimeMillis();
 		wdBayesOnlinePYP_MDLR[] classifiers = new wdBayesOnlinePYP_MDLR[m_EnsembleSize];
-		MDLR[] discretizer = new MDLR[m_EnsembleSize];
+		
 		Instances[] allTests = new Instances[m_EnsembleSize];
 
 		// train MDLR and classifier
 		for (int k = 0; k < m_EnsembleSize; k++) {
 
-			discretizer[k] = new MDLR();
-			discretizer[k].setInputFormat(train);
-			discretizer[k].setUseBetterEncoding(true);
-
-			Instances currentTrain = Filter.useFilter(train, discretizer[k]);
+			MDLR discretizer = new MDLR();
+			discretizer.setSeed(randomSeed);
+			discretizer.setUseBetterEncoding(true);
+			discretizer.setInputFormat(train);
+			Instances currentTrain = Filter.useFilter(train, discretizer);
+			
 			currentTrain.setClassIndex(currentTrain.numAttributes() - 1);
-			allTests[k] = Filter.useFilter(test, discretizer[k]);
+			allTests[k] = Filter.useFilter(test, discretizer);
 
 			classifiers[k] = (wdBayesOnlinePYP_MDLR) AbstractClassifier.makeCopy(learner);
+			classifiers[k].setSeed(randomSeed);
 			classifiers[k].buildClassifier(currentTrain);
+			randomSeed++;
+			
 			System.out.println("finish training the "+k+"th classifier");
 		}
 
@@ -97,7 +103,7 @@ public class OneFoldforSplice {
 
 			double[] probs = new double[nc];
 
-			for (int k = 0; k < discretizer.length; k++) {
+			for (int k = 0; k < m_EnsembleSize; k++) {
 
 				Instance currentInst = allTests[k].get(j);// discretizatoion
 				double[] p = classifiers[k].distributionForInstance(currentInst);
