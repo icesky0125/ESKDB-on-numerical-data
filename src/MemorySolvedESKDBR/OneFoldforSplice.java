@@ -46,16 +46,24 @@ public class OneFoldforSplice {
 		Instances structure = reader.getStructure();
 		structure.setClassIndex(structure.numAttributes() - 1);
 		int nc = structure.numClasses();
-		int N = getNumData(trainFile, structure);
+//		int N = getNumData(trainFile, structure);
 
 		String strData = trainFile.getName().substring(trainFile.getName().lastIndexOf("/") + 1,
 				trainFile.getName().lastIndexOf("."));
 		System.out.println("Dataset : " + strData);
-		System.out.println("data size \t" + N);
+//		System.out.println("data size \t" + N);
 		System.out.println("Attribute size \t" + structure.numAttributes());
 		System.out.println("class size \t" + nc);
 		System.out.println("class values:\t"+structure.attribute(structure.classIndex()));
 		
+		int N = 0;
+		if(strData.contains("sate")) {
+			N = 2610000;
+		}else if(strData.contains("Splice")) {
+			N = 50000000;
+		}else {
+			N = getNumData(trainFile, structure);
+		}
 		if(!M_estimation) {
 			// allowing sharing the log stirling numbers cache 
 			lgcache = LogStirlingFactory.newLogStirlingGenerator(N, 0);	
@@ -89,7 +97,7 @@ public class OneFoldforSplice {
 			if(!M_estimation) {
 				classifiers[k].setLogStirlingCache(lgcache);
 			}
-			discretizer[k] = classifiers[k].buildClassifier(trainFile, generator);
+			discretizer[k] = classifiers[k].buildClassifier(trainFile, randomSeed);
 			randomSeed++;
 			System.out.println("The "+k+"th SKDB classifier has been built");
 		}

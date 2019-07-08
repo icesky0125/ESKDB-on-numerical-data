@@ -6,6 +6,8 @@ import java.io.FileNotFoundException;
 import java.io.FileReader;
 import java.io.IOException;
 import java.util.Arrays;
+
+import Method.SmoothingMethod;
 import weka.classifiers.AbstractClassifier;
 import weka.core.Instance;
 import weka.core.Instances;
@@ -29,6 +31,8 @@ public class OneFoldforSplice {
 	private static int m_Tying = 2; // -L
 	private static String dataTain;
 	private static String dataTest;
+	
+	protected static SmoothingMethod method = SmoothingMethod.HGS;
 
 	public static void main(String[] args) throws Exception {
 
@@ -43,11 +47,12 @@ public class OneFoldforSplice {
 		wdBayesOnlinePYP_MDLR learner = new wdBayesOnlinePYP_MDLR();
 		learner.set_m_S(m_S);
 		learner.setK(m_K);
-		learner.setMEstimation(M_estimation);
+//		learner.setMEstimation(M_estimation);
 		learner.setGibbsIteration(m_IterGibbs);
 		learner.setBackoff(m_Backoff);
 		learner.setTying(m_Tying);
 		learner.setPrint(m_MVerb);
+		learner.setSmoothingMethod(method);
 
 		File sourceTrain = new File(dataTain);
 		Instances train = readFile2Instances(sourceTrain);
@@ -159,6 +164,18 @@ public class OneFoldforSplice {
 			dataTest = string;
 		}
 
+		string = Utils.getOption('m', options);
+		if (string.length() != 0) {
+			if(string.equalsIgnoreCase("HGS")){
+				method = SmoothingMethod.HGS;
+			}else if(string.equalsIgnoreCase("HDP")) {
+				method = SmoothingMethod.HDP;
+			}else if(string.equalsIgnoreCase("MESTIMATION")) {
+				method = SmoothingMethod.M_estimation;
+			}else if(string.equalsIgnoreCase("LAPLACE")) {
+				method = SmoothingMethod.LAPLACE;
+			}
+		}
 		m_MVerb = Utils.getFlag('V', options);
 		M_estimation = Utils.getFlag('M', options);
 		m_Backoff = Utils.getFlag('B', options);

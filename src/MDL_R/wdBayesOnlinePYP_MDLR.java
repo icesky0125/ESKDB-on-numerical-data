@@ -21,6 +21,7 @@ import java.io.FileReader;
 import java.util.Arrays;
 import org.apache.commons.math3.util.FastMath;
 import ESKDB.xxyDist;
+import Method.SmoothingMethod;
 import hdp.ProbabilityTree;
 import hdp.logStirling.LogStirlingFactory;
 import hdp.logStirling.LogStirlingGenerator;
@@ -53,7 +54,7 @@ public final class wdBayesOnlinePYP_MDLR implements Classifier, java.io.Serializ
 	int m_Tying = 2;
 
 	// added by He Zhang
-	private static boolean M_estimation = false;
+//	private static boolean M_estimation = false;
 	private boolean m_BackOff;
 	int[] m_Order;
 	int[][] m_Parents;
@@ -62,6 +63,11 @@ public final class wdBayesOnlinePYP_MDLR implements Classifier, java.io.Serializ
 	
 	// added by Matthieu Herrmann
 	public LogStirlingGenerator lgcache = null;
+	
+	//added by He Zhang: for HGS smoothing
+	protected SmoothingMethod method = SmoothingMethod.HGS;
+	private long seed;
+	private static boolean M_estimation = false; // default: using HDP
 	
 
 	/**
@@ -94,14 +100,17 @@ public final class wdBayesOnlinePYP_MDLR implements Classifier, java.io.Serializ
 		}
 
 		bn = new BNStructure_MDLR(m_Instances, m_S, m_KDB, paramsPerAtt);
+		bn.setSeed(seed);
 		bn.learnStructure(structure, sourceFile);
+		
+		
 
 		m_Order = bn.get_Order();
 		m_Parents = bn.get_Parents();
 		m_BestattIt = bn.get_BestattIt();
 		xxyDist_ = bn.get_XXYDist();
 		xxyDist_.countsToProbs(); // M-estimation for p(y)
-
+	
 		if (this.m_MVerb) {
 			System.out.println("************** Display Model **************\n");
 			System.out.println("* Attribute order is:\t" + Arrays.toString(this.m_Order));
@@ -122,17 +131,20 @@ public final class wdBayesOnlinePYP_MDLR implements Classifier, java.io.Serializ
 			dParameters_.update(row);
 			this.nInstances++;
 		}
-		
+//		dParameters_.setN(nInstances);
 		if (this.m_MVerb) {
 			System.out.println("************** Probability Smoothing Started **************");
 		}
 
-		if (M_estimation) {
+		switch (method) {
+		case M_estimation:
 			for (int u = 0; u < this.m_Order.length; u++) {
 				ProbabilityTree tree = dParameters_.getPypTrees()[u];
 				tree.convertCountToProbs(m_BackOff);
 			}
-		} else {
+
+			break;
+		case HDP:
 			// HDP smoothing
 			// sharing one cache for all the trees
 			lgcache = LogStirlingFactory.newLogStirlingGenerator(nInstances, 0);
@@ -145,12 +157,50 @@ public final class wdBayesOnlinePYP_MDLR implements Classifier, java.io.Serializ
 				if (m_MVerb)
 					System.out.println("Tree for attribute " + u + " has been smoothed");
 			}
+			break;
+		case HGS:
+			System.out.println("HGS smoothing");
+//			ProbabilityTree tree;
+//			for (int u = 0; u < this.m_Order.length; u++) {
+//				System.out.println("u=="+u);
+//				tree = dParameters_.getPypTrees()[u];
+//				tree.HGSsmoothing();
+//				System.out.println(tree.printFinalPks());
+//			}
+//			
+			break;
+		default:
+			break;
 		}
+			
+		// used in ESKDB paper
+//		if (M_estimation) {
+//			for (int u = 0; u < this.m_Order.length; u++) {
+//				ProbabilityTree tree = dParameters_.getPypTrees()[u];
+//				tree.convertCountToProbs(m_BackOff);
+//			}
+//		} else {
+//			// HDP smoothing
+//			// sharing one cache for all the trees
+//			lgcache = LogStirlingFactory.newLogStirlingGenerator(nInstances, 0);
+//
+//			for (int u = 0; u < this.m_Order.length; u++) {
+//				ProbabilityTree tree = dParameters_.getPypTrees()[u];
+//				tree.setLogStirlingCache(lgcache);
+//				tree.smooth();
+//				
+//				if (m_MVerb)
+//					System.out.println("Tree for attribute " + u + " has been smoothed");
+//			}
+//		}
 		
 		if (this.m_MVerb) {
 			System.out.println("************** Probability Smoothing Finished **************");
 		}
-	}
+		
+//		for(int i = 0; i < dParameters_.getPypTrees().length; i++)
+//			System.out.println(dParameters_.getPypTrees()[i].printFinalPks());
+     	}
 	
 	public double[] distributionForInstance(Instance instance) {
 		double[] probs = new double[nc];
@@ -159,8 +209,9 @@ public final class wdBayesOnlinePYP_MDLR implements Classifier, java.io.Serializ
 			//probs[c] = FastMath.log(xxyDist_.xyDist_.pp(c));// P(y)
 			probs[c] = xxyDist_.xyDist_.pp(c);// P(y)
 		}
-
+//		System.out.println(instance);
 		for (int u = 0; u < m_BestattIt; u++) {
+//			System.out.println(u);
 			for (int c = 0; c < nc; c++) {
 				double prob = dParameters_.query(instance,u,c);
 				probs[c] += FastMath.log(prob);
@@ -180,9 +231,9 @@ public final class wdBayesOnlinePYP_MDLR implements Classifier, java.io.Serializ
 		m_S = string;
 	}
 
-	public void setMEstimation(boolean m) {
-		M_estimation = m;
-	}
+//	public void setMEstimation(boolean m) {
+//		M_estimation = m;
+//	}
 
 	public void setTying(int t) {
 		m_Tying = t;
@@ -222,5 +273,13 @@ public final class wdBayesOnlinePYP_MDLR implements Classifier, java.io.Serializ
 
 //		this.set_m_S("ESKDB_R");
 		buildClassifier(dataFile);
+	}
+
+	public void setSmoothingMethod(SmoothingMethod method2) {
+		method = method2;
+	}
+
+	public void setSeed(long randomSeed) {
+		seed = randomSeed;
 	}
 }

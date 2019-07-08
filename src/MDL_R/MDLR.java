@@ -11,7 +11,8 @@ public class MDLR extends Discretize {
 
 	/** for serialization */
 	static final long serialVersionUID = -3141006402280129097L;
-
+	long seed;
+	
 	public MDLR() {
 		super.setAttributeIndices("first-last");
 	}
@@ -319,7 +320,10 @@ public class MDLR extends Discretize {
 					return null;
 				} else {
 
-					double p = Math.random();
+//					double p = Math.random();
+					Random generator = new Random(seed);
+					double p = generator.nextDouble();
+
 					int indexIG = SUtils.cumulativeProbability(informationGain, p);
 
 					bestCutPoint = possibleCutPoints.get(indexIG);
@@ -336,7 +340,11 @@ public class MDLR extends Discretize {
 		SUtils.normalize(distribution);
 		int selectedIndex;
 
-		double p = Math.random();
+//		double p = Math.random();
+		Random generator = new Random(seed);
+		double p = generator.nextDouble();
+		seed++;
+
 		selectedIndex = SUtils.cumulativeProbability(distribution, p);
 		bestCutPoint = possibleCutPoints.get(selectedIndex);
 
@@ -368,5 +376,9 @@ public class MDLR extends Discretize {
 		}
 
 		return cutPoints;
+	}
+	
+	public void setSeed(long s) {
+		this.seed = s;
 	}
 }

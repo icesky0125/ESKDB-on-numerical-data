@@ -33,6 +33,7 @@ public final class BNStructure_MDLR {
 	private int[] paramsPerAtt;
 	private int m_BestK_ = 0;
 	private int m_BestattIt = 0;
+	private long seed;
 	
 	public BNStructure_MDLR(Instances m_Instances, String m_S, int k, int[] ppa) {
 		this.m_S = m_S;
@@ -62,7 +63,7 @@ public final class BNStructure_MDLR {
 		// First fill xxYDist; everybody needs it
 		ArffReader reader = new ArffReader(new BufferedReader(new FileReader(sourceFile)), 10000);
 		Instance row;
-
+		
 		while ((row = reader.readInstance(structure)) != null) {
 			updateXXYDist(row);
 			xxyDist_.setNoData();
@@ -374,7 +375,9 @@ public final class BNStructure_MDLR {
 		CorrelationMeasures.getCondMutualInf(xxyDist_, cmi);
 
 		// random sampled attribute order
-		m_Order = sampleReNormalizing(m_Order, mi);
+	
+		Random rg = new Random(seed);
+		m_Order = sampleReNormalizing(m_Order, mi,rg);
 		
 		int negativeIndex = m_Order.length;
 		for(int i = 0; i < m_Order.length; i++) {
@@ -533,18 +536,39 @@ public final class BNStructure_MDLR {
 		m_ParentsTemp = null;
 	}
 	
-	private int[] sampleReNormalizing(int[] tempS, double[] tempCMI) {
+//	private int[] sampleReNormalizing(int[] tempS, double[] tempCMI) {
+//		int[] res = new int[tempCMI.length];
+//		for(int i = 0; i < res.length; i++) {
+//			res[i] = -1;
+//		}
+//		long seed = 19900125;
+//		for (int i = 0; i < tempCMI.length; i++) {
+//
+//			Utils.normalize(tempCMI);
+////			double p = Math.random();
+//			seed = seed + i;
+//			Random generator = new Random(seed);
+//			double num = generator.nextDouble();
+//			int index = cumulativeProbability(tempCMI, num);
+//			res[i] = tempS[index];
+//			tempCMI[index] = 0;// set the selected probability to be zero, then
+//								// select another parent again
+//			if (Utils.sum(tempCMI) == 0) {
+//				break;
+//			}
+//		}
+//		return res;
+//	}
+	
+	private int[] sampleReNormalizing(int[] tempS, double[] tempCMI, Random generator) {
 		int[] res = new int[tempCMI.length];
 		for(int i = 0; i < res.length; i++) {
 			res[i] = -1;
 		}
-		long seed = 19900125;
+
 		for (int i = 0; i < tempCMI.length; i++) {
 
 			Utils.normalize(tempCMI);
-//			double p = Math.random();
-			seed = seed + i;
-			Random generator = new Random(seed);
 			double num = generator.nextDouble();
 			int index = cumulativeProbability(tempCMI, num);
 			res[i] = tempS[index];
@@ -556,6 +580,7 @@ public final class BNStructure_MDLR {
 		}
 		return res;
 	}
+
 	
 	private int cumulativeProbability(double[] array, double p) {
 
@@ -603,5 +628,10 @@ public final class BNStructure_MDLR {
 			}
 		}
 		return false;
+	}
+
+	public void setSeed(long s) {
+		// TODO Auto-generated method stub
+		seed = s;
 	}
 }

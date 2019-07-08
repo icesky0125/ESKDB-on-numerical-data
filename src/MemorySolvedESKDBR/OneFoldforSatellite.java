@@ -79,7 +79,7 @@ public class OneFoldforSatellite {
 		for (int k = 0; k < m_EnsembleSize; k++) {
 			Random generator = new Random(randomSeed);
 			classifiers[k] = (wdBayesOnlinePYP_MDLR) AbstractClassifier.makeCopy(learner);
-			discretizer[k] = classifiers[k].buildClassifier(trainFile, generator);
+			discretizer[k] = classifiers[k].buildClassifier(trainFile, randomSeed);
 			System.out.println("The "+k+"th classifier has been trained");
 			randomSeed++;
 		}

@@ -788,7 +788,7 @@ public final class BNStructure {
 		for (int i = 0; i < tempCMI.length; i++) {
 
 			Utils.normalize(tempCMI);
-			// System.out.println(Arrays.toString(tempCMI));
+			 System.out.println(Arrays.toString(tempCMI));
 			double p = Math.random();
 			// System.out.println("p: "+p);
 			int index = cumulativeProbability(tempCMI, p);

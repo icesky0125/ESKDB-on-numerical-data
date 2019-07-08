@@ -11,7 +11,6 @@ import java.util.Random;
 import org.apache.commons.math3.util.FastMath;
 import ESKDB.xxyDist;
 import hdp.ProbabilityTree;
-import hdp.logStirling.LogStirlingFactory;
 import hdp.logStirling.LogStirlingGenerator;
 import tools.SUtils;
 import weka.classifiers.Classifier;
@@ -19,7 +18,6 @@ import weka.core.Capabilities;
 import weka.core.Instance;
 import weka.core.Instances;
 import weka.core.converters.ArffLoader.ArffReader;
-import weka.core.converters.ArffSaver;
 import weka.filters.Filter;
 
 public final class wdBayesOnlinePYP_MDLR implements Classifier, java.io.Serializable {
@@ -66,8 +64,8 @@ public final class wdBayesOnlinePYP_MDLR implements Classifier, java.io.Serializ
 	 * @param sourceFile
 	 * @throws Exception
 	 */
-	public MDLR buildClassifier(File sourceFile,Random generator) throws Exception {
-	
+	public MDLR buildClassifier(File sourceFile,long randomSeed) throws Exception {
+//	public MDLR buildClassifier(File sourceFile,Random generator) throws Exception {
 		ArffReader reader = new ArffReader(new BufferedReader(new FileReader(sourceFile), BUFFER_SIZE), 10000);
 		Instances structure = reader.getStructure();
 		structure.setClassIndex(structure.numAttributes() - 1);
@@ -75,34 +73,45 @@ public final class wdBayesOnlinePYP_MDLR implements Classifier, java.io.Serializ
 		nc = structure.numClasses();
 
 		// go through the data to get the training size
-		nInstances= getNumData(sourceFile);
+//		if(sourceFile.getName().contains("sate")) {
+//			nInstances = 2610000;
+//		}else if(sourceFile.getName().contains("Splice")) {
+//			nInstances = 50000000;
+//		}else {
+//			nInstances= getNumData(sourceFile);
+//		}
 
 		Instances trainFordisc = structure;
 		reader = new ArffReader(new BufferedReader(new FileReader(sourceFile), BUFFER_SIZE), 10000);
 		structure = reader.getStructure();
-		if(nInstances <= 1000000) {
+//		if(nInstances <= 1000000) {
 //			// load all example to find the cut points
 			Instance row;
 			while ((row = reader.readInstance(structure)) != null) {
 				trainFordisc.add(row); 
 			}
-		}else {
-//			// load 100,000 to find the cut points
-			double ratio = (double)100000/nInstances;
-			Instance row;
-			while ((row = reader.readInstance(structure)) != null) {
-				if(generator.nextDouble() < ratio) {
-					trainFordisc.add(row); 
-				}
-			}
-		}
+//		}else {
+////			// load 100,000 to find the cut points
+//			double ratio = (double)100000/nInstances;
+//			Instance row;
+//			while ((row = reader.readInstance(structure)) != null) {
+//				if(generator.nextDouble() < ratio) {
+//					trainFordisc.add(row); 
+//				}
+//			}
+//		}
 		
+//		System.out.println(trainFordisc.firstInstance());
 		// find cut points based on trainForDisc
 		MDLR discretizer = new MDLR();
 		discretizer.setInputFormat(trainFordisc);
 		discretizer.setUseBetterEncoding(true);
+//		System.out.println(randomSeed);
+		discretizer.setSeed(randomSeed);
 		Instances m_Instances = Filter.useFilter(trainFordisc, discretizer);	// here m_Instances is just the data in trainFordisc
-		
+//		System.out.println(m_Instances.attribute(0));
+//		System.out.println(m_Instances.firstInstance());
+	
 		// free some memory
 		m_Instances.clear();
 		trainFordisc = null;
@@ -113,6 +122,7 @@ public final class wdBayesOnlinePYP_MDLR implements Classifier, java.io.Serializ
 		}
 		
 		bn = new BNStructure_MDLR(m_Instances, m_S, m_KDB, paramsPerAtt);
+		Random generator = new Random(randomSeed);
 		bn.learnStructure(sourceFile, discretizer, generator);
 
 		m_Order = bn.get_Order();
@@ -137,7 +147,7 @@ public final class wdBayesOnlinePYP_MDLR implements Classifier, java.io.Serializ
 		
 		
 		// go through the data to update the tree
-		Instance row;
+//		Instance row;
 		this.nInstances = 0;
 		reader = new ArffReader(new BufferedReader(new FileReader(sourceFile), BUFFER_SIZE), 10000);
 		while ((row = reader.readInstance(structure)) != null) {
@@ -177,6 +187,9 @@ public final class wdBayesOnlinePYP_MDLR implements Classifier, java.io.Serializ
 		if (this.m_MVerb) {
 			System.out.println("************** Probability Smoothing Finished **************");
 		}
+		
+//		for(int i =0; i < dParameters_.getPypTrees().length; i++)
+//			System.out.println(dParameters_.getPypTrees()[i].printFinalPks());
 		
 		return discretizer;
 	}

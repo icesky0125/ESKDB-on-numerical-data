@@ -7,13 +7,14 @@ import org.apache.commons.math3.random.RandomDataGenerator;
 
 import hdp.logStirling.LogStirlingGenerator.CacheExtensionException;
 import mltools.MathUtils;
+import weka.core.Utils;
 
 public class ProbabilityNode {
 
 	/**
 	 * Max value for sampling TK
 	 */
-	public static final int MAX_TK = 10000;
+	public static final int MAX_TK = 1000;
 
 	/**
 	 * True count
@@ -563,7 +564,7 @@ public class ProbabilityNode {
 		pkAveraged = new double[nk.length];
 		if (MathUtils.sum(nk) != 0) {
 			for (int i = 0; i < nk.length; i++) {
-				pkAveraged[i] = MathUtils.MEsti(nk[i], marginal_nk, nk.length);
+				pkAveraged[i] = Utils.roundDouble(MathUtils.MEsti(nk[i], marginal_nk, nk.length),4);
 			}
 		} else {
 			if (m_BackOff) {

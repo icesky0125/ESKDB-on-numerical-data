@@ -6,6 +6,7 @@ import java.io.FileReader;
 import java.util.Arrays;
 import java.util.Random;
 
+import Method.SmoothingMethod;
 import weka.core.Instances;
 import weka.core.Utils;
 import weka.core.converters.ArffLoader.ArffReader;
@@ -22,6 +23,8 @@ public class TenFoldCV_MDLR {
 	private static int m_EnsembleSize = 5; // -E
 	private static boolean m_Backoff = true;
 	private static int m_Tying = 2; // -L
+	
+	protected static SmoothingMethod method = SmoothingMethod.HGS;
 
 	public static void main(String[] args) throws Exception {
 	
@@ -68,11 +71,12 @@ public class TenFoldCV_MDLR {
 			wdBayesOnlinePYP_MDLR learner = new wdBayesOnlinePYP_MDLR();
 			learner.set_m_S(m_S);
 			learner.setK(m_K);
-			learner.setMEstimation(M_estimation);
+//			learner.setMEstimation(M_estimation);
 			learner.setGibbsIteration(m_IterGibbs);
 			learner.setBackoff(m_Backoff);
 			learner.setTying(m_Tying);
 			learner.setPrint(m_MVerb);
+			learner.setSmoothingMethod(method);
 
 			Evaluation_MDLR eva = new Evaluation_MDLR(data);
 			eva.setSize(m_EnsembleSize);
@@ -105,6 +109,19 @@ public class TenFoldCV_MDLR {
 		string = Utils.getOption('t', options);
 		if (string.length() != 0) {
 			data = string;
+		}
+		
+		string = Utils.getOption('m', options);
+		if (string.length() != 0) {
+			if(string.equalsIgnoreCase("HGS")){
+				method = SmoothingMethod.HGS;
+			}else if(string.equalsIgnoreCase("HDP")) {
+				method = SmoothingMethod.HDP;
+			}else if(string.equalsIgnoreCase("MESTIMATION")) {
+				method = SmoothingMethod.M_estimation;
+			}else if(string.equalsIgnoreCase("LAPLACE")) {
+				method = SmoothingMethod.LAPLACE;
+			}
 		}
 
 		m_MVerb = Utils.getFlag('V', options);

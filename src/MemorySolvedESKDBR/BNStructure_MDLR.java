@@ -7,6 +7,7 @@ import java.io.FileReader;
 import java.io.IOException;
 import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.Collections;
 import java.util.Random;
 import ESKDB.wdBayesParametersTree;
 import ESKDB.xxyDist;
@@ -347,7 +348,6 @@ public final class BNStructure_MDLR {
 	}
 
 	private void learnStructureNB() {
-		
 	}
 	
 	private void learnStructureTAN() {
@@ -383,6 +383,13 @@ public final class BNStructure_MDLR {
 		CorrelationMeasures.getCondMutualInf(xxyDist_, cmi);
 
 		// random sampled attribute order
+//		System.out.println(Arrays.toString(mi));
+//		int[] orders = Utils.sort(mi);
+//		System.out.println(Arrays.toString(orders));
+//		Arrays.sort(mi, Collections.reverseOrder());
+//		Utils.normalize(mi);
+//		System.out.println(Arrays.toString(mi));
+		
 		m_Order = sampleReNormalizing(m_Order, mi,rg);
 		
 		int negativeIndex = m_Order.length;
@@ -570,6 +577,30 @@ public final class BNStructure_MDLR {
 		}
 		return res;
 	}
+	
+//	private int[] sampleReNormalizing(int[] tempS, double[] tempCMI) {
+//		int[] res = new int[tempCMI.length];
+//		for(int i = 0; i < res.length; i++) {
+//			res[i] = -1;
+//		}
+//		long seed = 19900125;
+//		for (int i = 0; i < tempCMI.length; i++) {
+//
+//			Utils.normalize(tempCMI);
+////			double p = Math.random();
+//			seed = seed + i;
+//			Random generator = new Random(seed);
+//			double num = generator.nextDouble();
+//			int index = cumulativeProbability(tempCMI, num);
+//			res[i] = tempS[index];
+//			tempCMI[index] = 0;// set the selected probability to be zero, then
+//								// select another parent again
+//			if (Utils.sum(tempCMI) == 0) {
+//				break;
+//			}
+//		}
+//		return res;
+//	}
 	
 	private int cumulativeProbability(double[] array, double p) {
 

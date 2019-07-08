@@ -11,6 +11,8 @@ import java.io.IOException;
 import java.util.Arrays;
 import java.util.BitSet;
 import org.apache.commons.math3.random.MersenneTwister;
+
+import Method.SmoothingMethod;
 import weka.classifiers.AbstractClassifier;
 import weka.core.Instance;
 import weka.core.Instances;
@@ -35,6 +37,9 @@ public class TwoFoldCVESKDB {
 	private static int m_Tying = 2; // -L
 	private static int m_BeginData = 0;
 
+	// added for HGS smoothing on ESKDB
+	protected static SmoothingMethod method = SmoothingMethod.HGS;
+	
 	public static void main(String[] args) throws Exception {
 
 		System.out.println(Arrays.toString(args));
@@ -100,11 +105,12 @@ public class TwoFoldCVESKDB {
 				wdBayesOnlinePYP_MDLR learner = new wdBayesOnlinePYP_MDLR();
 				learner.set_m_S(m_S);
 				learner.setK(m_K);
-				learner.setMEstimation(M_estimation);
+//				learner.setMEstimation(M_estimation);
 				learner.setGibbsIteration(m_IterGibbs);
 				learner.setBackoff(m_Backoff);
 				learner.setTying(m_Tying);
 				learner.setPrint(m_MVerb);
+				learner.setSmoothingMethod(method);
 
 				// creating tempFile for train0
 				File trainFile = createTrainTmpFile(sourceFile, structure, test0Indexes);
@@ -224,11 +230,12 @@ public class TwoFoldCVESKDB {
 				learner = new wdBayesOnlinePYP_MDLR();
 				learner.set_m_S(m_S);
 				learner.setK(m_K);
-				learner.setMEstimation(M_estimation);
+//				learner.setMEstimation(M_estimation);
 				learner.setGibbsIteration(m_IterGibbs);
 				learner.setBackoff(m_Backoff);
 				learner.setTying(m_Tying);
 				learner.setPrint(m_MVerb);
+				learner.setSmoothingMethod(method);
 
 				// creating tempFile for train0
 				trainFile = createTrainTmpFile(sourceFile, structure, test1Indexes);
@@ -376,6 +383,19 @@ public class TwoFoldCVESKDB {
 			data = string;
 		}
 
+		string = Utils.getOption('m', options);
+		if (string.length() != 0) {
+			if(string.equalsIgnoreCase("HGS")){
+				method = SmoothingMethod.HGS;
+			}else if(string.equalsIgnoreCase("HDP")) {
+				method = SmoothingMethod.HDP;
+			}else if(string.equalsIgnoreCase("MESTIMATION")) {
+				method = SmoothingMethod.M_estimation;
+			}else if(string.equalsIgnoreCase("LAPLACE")) {
+				method = SmoothingMethod.LAPLACE;
+			}
+		}
+		
 		m_MVerb = Utils.getFlag('V', options);
 		M_estimation = Utils.getFlag('M', options);
 		m_Backoff = Utils.getFlag('B', options);

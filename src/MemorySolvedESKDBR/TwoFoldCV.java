@@ -72,7 +72,7 @@ public class TwoFoldCV {
 		System.out.println("Attribute size \t" + structure.numAttributes());
 		System.out.println("class size \t" + nc);
 		System.out.print(strData + "\t");
-		
+
 		if (!M_estimation) {
 			lgcache = LogStirlingFactory.newLogStirlingGenerator(N, 0);
 		}
@@ -84,7 +84,7 @@ public class TwoFoldCV {
 		double trainTime = 0;
 
 		long randomSeed = 1990093;
-		
+
 		if (m_MVerb) {
 			System.out.println("A 5 times 2-fold cross-validation will be started.");
 		}
@@ -112,25 +112,27 @@ public class TwoFoldCV {
 			learner.setBackoff(m_Backoff);
 			learner.setTying(m_Tying);
 			learner.setPrint(m_MVerb);
-			
+
 			// creating tempFile for train0
 			File trainFile = createTrainTmpFile(sourceFile, structure, test0Indexes);
 			
+//			System.out.println(readFile2Instances(trainFile).firstInstance());
+//			System.out.println(readFile2Instances(trainFile).numInstances());
+
 			long start = System.currentTimeMillis();
 			wdBayesOnlinePYP_MDLR[] classifiers = new wdBayesOnlinePYP_MDLR[m_EnsembleSize];
 			MDLR[] discretizer = new MDLR[m_EnsembleSize];
-			
+
 			// train MDLR and classifier
-			
+
 			for (int k = 0; k < m_EnsembleSize; k++) {
-				Random generator = new Random(randomSeed);
+//				Random generator = new Random(randomSeed);
 				classifiers[k] = (wdBayesOnlinePYP_MDLR) AbstractClassifier.makeCopy(learner);
-				
+
 				if (!M_estimation) {
 					classifiers[k].setLogStirlingCache(lgcache);
 				}
-				
-				discretizer[k] = classifiers[k].buildClassifier(trainFile,generator);
+				discretizer[k] = classifiers[k].buildClassifier(trainFile, randomSeed);
 				randomSeed++;
 			}
 
@@ -148,28 +150,25 @@ public class TwoFoldCV {
 			Instance current;
 			int thisNTest = 0;
 			reader = new ArffReader(new BufferedReader(new FileReader(sourceFile), BUFFER_SIZE), 100000);
-			
+
 			start = System.currentTimeMillis();
 			while ((current = reader.readInstance(structure)) != null) {
-//				System.out.println(current.toString());
+				
 				if (test0Indexes.get(lineNo)) {
 					int x_C = (int) current.classValue();// true class label
 					double[] probs = new double[nc];
-					
 					for (int k = 0; k < discretizer.length; k++) {
-						current = discretizer[k].discretize(current);
-						
-						double[] p = classifiers[k].distributionForInstance(current);
-
+						Instance currentTest = discretizer[k].discretize(current);
+						double[] p = classifiers[k].distributionForInstance(currentTest);
 						for (int c = 0; c < nc; c++) {
 							probs[c] += p[c];
 						}
 					}
-					
+
 					for (int c = 0; c < nc; c++) {
 						probs[c] /= m_EnsembleSize;
 					}
-					
+
 					// ------------------------------------
 					// Update Error and RMSE
 					// ------------------------------------
@@ -229,17 +228,17 @@ public class TwoFoldCV {
 			trainFile = createTrainTmpFile(sourceFile, structure, test1Indexes);
 			classifiers = new wdBayesOnlinePYP_MDLR[m_EnsembleSize];
 			discretizer = new MDLR[m_EnsembleSize];
-			
+
 			start = System.currentTimeMillis();
 			for (int k = 0; k < m_EnsembleSize; k++) {
-				Random generator = new Random(seed);
+//				Random generator = new Random(randomSeed);
 				classifiers[k] = (wdBayesOnlinePYP_MDLR) AbstractClassifier.makeCopy(learner);
-				
+
 				if (!M_estimation) {
 					classifiers[k].setLogStirlingCache(lgcache);
 				}
-				
-				discretizer[k] = classifiers[k].buildClassifier(trainFile,generator);
+
+				discretizer[k] = classifiers[k].buildClassifier(trainFile, randomSeed);
 				randomSeed++;
 			}
 
@@ -251,33 +250,30 @@ public class TwoFoldCV {
 			// ---------------------------------------------------------
 			// Test on Fold 2
 			// ---------------------------------------------------------
-			
+
 			thisNTest = 0;
 			lineNo = 0;
 			reader = new ArffReader(new BufferedReader(new FileReader(sourceFile), BUFFER_SIZE), 100000);
-//			structure = reader.getStructure();
-//			structure.setClassIndex(structure.numAttributes()-1);
-//			start = System.currentTimeMillis();
 			while ((current = reader.readInstance(structure)) != null) {
 				if (test1Indexes.get(lineNo)) {
-					
+
 					int x_C = (int) current.classValue();// true class label
 					double[] probs = new double[nc];
-					
+
 					for (int k = 0; k < discretizer.length; k++) {
-						current = discretizer[k].discretize(current);
-						
-						double[] p = classifiers[k].distributionForInstance(current);
+						Instance currentTest = discretizer[k].discretize(current);
+
+						double[] p = classifiers[k].distributionForInstance(currentTest);
 
 						for (int c = 0; c < nc; c++) {
 							probs[c] += p[c];
 						}
 					}
-					
+
 					for (int c = 0; c < nc; c++) {
 						probs[c] /= m_EnsembleSize;
 					}
-					
+
 					// ------------------------------------
 					// Update Error and RMSE
 					// ------------------------------------
@@ -311,7 +307,7 @@ public class TwoFoldCV {
 						"Testing fold 2 result - RMSE = " + Utils.doubleToString(Math.sqrt(m_RMSE / NTest), 6, 4)
 								+ "\t0-1 Loss = " + Utils.doubleToString(m_Error / NTest, 6, 4));
 			}
-			
+
 			if (Math.abs(thisNTest - test0Indexes.cardinality()) > 1) {
 				System.err.println("no! " + thisNTest + "\t" + test0Indexes.cardinality());
 			}
@@ -321,7 +317,7 @@ public class TwoFoldCV {
 
 		m_RMSE = Math.sqrt(m_RMSE / NTest);
 		m_Error = m_Error / NTest;
-		trainTime = trainTime / (m_nExp*2);
+		trainTime = trainTime / (m_nExp * 2);
 
 //		System.out.println("\n----------------------Bias-Variance Decomposition-------------------");
 //		System.out.println("Classifier:\t" + m_S);

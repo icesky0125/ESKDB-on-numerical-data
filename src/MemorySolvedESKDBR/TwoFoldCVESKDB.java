@@ -136,7 +136,7 @@ public class TwoFoldCVESKDB {
 						classifiers[k].setLogStirlingCache(lgcache);
 					}
 
-					discretizer[k] = classifiers[k].buildClassifier(trainFile, generator);
+					discretizer[k] = classifiers[k].buildClassifier(trainFile,randomSeed);
 					randomSeed++;
 				}
 
@@ -238,14 +238,14 @@ public class TwoFoldCVESKDB {
 
 				start = System.currentTimeMillis();
 				for (int k = 0; k < m_EnsembleSize; k++) {
-					Random generator = new Random(seed);
+					Random generator = new Random(randomSeed);
 					classifiers[k] = (wdBayesOnlinePYP_MDLR) AbstractClassifier.makeCopy(learner);
 					
 					if (!M_estimation) {
 						classifiers[k].setLogStirlingCache(lgcache);
 					}
 					
-					discretizer[k] = classifiers[k].buildClassifier(trainFile, generator);
+					discretizer[k] = classifiers[k].buildClassifier(trainFile, randomSeed);
 
 					randomSeed++;
 				}

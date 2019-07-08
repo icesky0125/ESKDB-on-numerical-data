@@ -31,6 +31,7 @@ public class wdBayesParametersTreePYP {
 		instances = data;
 		this.n = m_Order.length;
 		this.nc = instances.numClasses();
+		this.N= instances.numInstances();
 
 		m_ParamsPerAtt = new int[n]; // num of values of each attributes
 		for (int u = 0; u < n; u++) {
@@ -119,4 +120,11 @@ public class wdBayesParametersTreePYP {
 	public ProbabilityTree[] getPypTrees() {
 		return this.pypTrees;
 	}
+	
+//	public void setN(int nn) {
+//		N = nn;
+//		for (int u = 0; u < n; u++) {
+//			pypTrees[u].setNumInstances(N);
+//		}
+//	}
 }

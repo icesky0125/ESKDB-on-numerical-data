@@ -359,6 +359,7 @@ public class LogStirlingGenerator implements AutoCloseable {
 	private long extends_n(long upToN_) {
 		// Extend the cache and the bounding column
 		// The cache may return a value larger than uptoN_: cap it to N
+//		System.out.println("try to extends_n to "+upToN_);
 		long upToN = cache.extends_n(upToN_);
 		if (upToN > N) { upToN = N;	}
 		boundingCol.reallocate(upToN);
@@ -437,6 +438,7 @@ public class LogStirlingGenerator implements AutoCloseable {
 			// Check n dimension. Cap to N while trying to grow by extension steps.
 			if (n > boundingN) {
 				long nn = Long.min(N, (long)(n*EXTENDS_RATIO)); //Long.max((long)(boundingN * EXTENDS_RATIO), n));
+//				long nn = Long.min(N, (long)(n+1));
 				nn = extends_n(nn);
 				if (n > nn) {
 					String msg = "Cannnot extends the cache to query n = " + n + ". Cache extended up to + " + nn + ".";

@@ -12,6 +12,8 @@ public class MDLR extends Discretize {
 
 	/** for serialization */
 	static final long serialVersionUID = -3141006402280129097L;
+	double firstCutPoint = 0;
+	long seed = 3071980;
 
 	public MDLR() {
 		super.setAttributeIndices("first-last");
@@ -87,6 +89,38 @@ public class MDLR extends Discretize {
 			}
 		}
 		m_CutPoints[index] = cutPointsForSubset(data, index, 0, firstMissing, true);
+//		double[] resCut = cutPointsForSubset(data, index, 0, firstMissing, true);
+//		double[] twentyCut = new double[20];
+//		if(resCut.length > 20) {
+//			System.out.println(Arrays.toString(resCut));
+//			System.out.println(this.firstCutPoint);
+//			
+//			int firstIndex = 0;
+//			for(int i = 0; i < resCut.length; i++) {
+//				if(resCut[i] == this.firstCutPoint) {
+//					firstIndex = i;
+//				}
+//			}
+//			
+//			if(firstIndex < 10) {
+//				for(int i = 0; i < 20; i++) {
+//					twentyCut[i] = resCut[i];
+//				}
+//				
+//			}else if(firstIndex == 10) {
+//				for(int i = firstIndex-10; i < firstIndex+10; i++) {
+//					twentyCut[i] = resCut[i];
+//				}
+//			}else if(firstIndex > 10) {
+//				int diff = resCut.length-20;
+//				for(int i = diff; i < resCut.length; i++) {
+//					twentyCut[i-diff] = resCut[i];
+//				}
+//			}
+//			System.out.println(Arrays.toString(twentyCut));
+//			System.out.println(twentyCut.length);	
+//		}
+//		m_CutPoints[index] = twentyCut;
 	}
 
 	/**
@@ -319,7 +353,10 @@ public class MDLR extends Discretize {
 				if (Utils.sum(informationGain) <= 0) {
 					return null;
 				} else {
-					double p = Math.random();
+//					double p = Math.random();
+					Random generator = new Random(seed);
+					double p = generator.nextDouble();
+					
 					int indexIG = SUtils.cumulativeProbability(informationGain, p);
 
 					bestCutPoint = possibleCutPoints.get(indexIG);
@@ -336,9 +373,14 @@ public class MDLR extends Discretize {
 		SUtils.normalize(distribution);
 		int selectedIndex;
 
-		double p = Math.random();
+//		double p = Math.random();
+		Random generator = new Random(seed);
+		double p = generator.nextDouble();
+		seed++;
+		
 		selectedIndex = SUtils.cumulativeProbability(distribution, p);
 		bestCutPoint = possibleCutPoints.get(selectedIndex);
+		this.firstCutPoint = bestCutPoint;
 
 		if (selectedIndex != 0) {
 			left = cutPointsForSubset(instances, attIndex, first, index.get(selectedIndex) + 1, false);
@@ -429,5 +471,9 @@ public class MDLR extends Discretize {
 //	    copyValues(inst, false, row.dataset(), outputFormatPeek());
 	    
 		return inst;
+	}
+	
+	public void setSeed(long s) {
+		this.seed = s;
 	}
 }

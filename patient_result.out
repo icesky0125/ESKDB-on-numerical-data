@@ -1,16 +1,222 @@
-[-t, /Users/hezhang/eclipse-workspace/train.arff, -T, test.arff, -K, -S, SKDB_R, -I, 1000, -L, 2, -E, 10]
+[-t, /Users/hezhang/eclipse-workspace/train.arff, -T, ../test.arff, -K, -S, SKDB, -I, 1000, -L, 2, -E, 10, -M, -B]
 Dataset : train
 data size 	1864
 Attribute size 	85
 class size 	2
-Started learning
-The 0th SKDB classifier has been built and smoothed
-The 1th SKDB classifier has been built and smoothed
-The 2th SKDB classifier has been built and smoothed
-The 3th SKDB classifier has been built and smoothed
-The 4th SKDB classifier has been built and smoothed
-The 5th SKDB classifier has been built and smoothed
-The 6th SKDB classifier has been built and smoothed
-The 7th SKDB classifier has been built and smoothed
-The 8th SKDB classifier has been built and smoothed
-The 9th SKDB classifier has been built and smoothed
+
+Started testing
+testID:	Prob(0)	Prob(1)	Prediction	TrueClass
+test example 0:	 0.67 	 0.33 	0	0
+test example 1:	 0.67 	 0.33 	0	0
+test example 2:	 0.681	 0.319	0	0
+test example 3:	 0.608	 0.392	0	0
+test example 4:	 0.982	 0.018	0	0
+test example 5:	 0.681	 0.319	0	0
+test example 6:	 0.67 	 0.33 	0	0
+test example 7:	 0.493	 0.507	1	0
+test example 8:	 0.982	 0.018	0	0
+test example 9:	 0.67 	 0.33 	0	0
+test example 10:	 0.681	 0.319	0	0
+test example 11:	 0.982	 0.018	0	0
+test example 12:	 0.871	 0.129	0	0
+test example 13:	 0.681	 0.319	0	0
+test example 14:	 0.681	 0.319	0	0
+test example 15:	 0.982	 0.018	0	0
+test example 16:	 0.681	 0.319	0	0
+test example 17:	 0.608	 0.392	0	0
+test example 18:	 0.67 	 0.33 	0	0
+test example 19:	 0.681	 0.319	0	0
+test example 20:	 0.871	 0.129	0	0
+test example 21:	 0.681	 0.319	0	0
+test example 22:	 0.681	 0.319	0	0
+test example 23:	 0.67 	 0.33 	0	0
+test example 24:	 0.493	 0.507	1	0
+test example 25:	 0.67 	 0.33 	0	0
+test example 26:	 0.681	 0.319	0	0
+test example 27:	 0.694	 0.306	0	0
+test example 28:	 0.493	 0.507	1	0
+test example 29:	 0.608	 0.392	0	0
+test example 30:	 0.681	 0.319	0	0
+test example 31:	 0.871	 0.129	0	0
+test example 32:	 0.67 	 0.33 	0	0
+test example 33:	 0.982	 0.018	0	0
+test example 34:	 0.871	 0.129	0	0
+test example 35:	 0.493	 0.507	1	0
+test example 36:	 0.982	 0.018	0	0
+test example 37:	 0.67 	 0.33 	0	0
+test example 38:	 0.67 	 0.33 	0	0
+test example 39:	 0.608	 0.392	0	0
+test example 40:	 0.493	 0.507	1	0
+test example 41:	 0.67 	 0.33 	0	0
+test example 42:	 0.67 	 0.33 	0	0
+test example 43:	 0.681	 0.319	0	0
+test example 44:	 0.67 	 0.33 	0	0
+test example 45:	 0.493	 0.507	1	0
+test example 46:	 0.982	 0.018	0	0
+test example 47:	 0.608	 0.392	0	0
+test example 48:	 0.982	 0.018	0	0
+test example 49:	 0.982	 0.018	0	0
+test example 50:	 0.681	 0.319	0	0
+test example 51:	 0.982	 0.018	0	0
+test example 52:	 0.681	 0.319	0	0
+test example 53:	 0.67 	 0.33 	0	0
+test example 54:	 0.982	 0.018	0	0
+test example 55:	 0.871	 0.129	0	0
+test example 56:	 0.681	 0.319	0	0
+test example 57:	 0.871	 0.129	0	0
+test example 58:	 0.982	 0.018	0	0
+test example 59:	 0.681	 0.319	0	0
+test example 60:	 0.681	 0.319	0	0
+test example 61:	 0.67 	 0.33 	0	0
+test example 62:	 0.493	 0.507	1	0
+test example 63:	 0.694	 0.306	0	0
+test example 64:	 0.493	 0.507	1	0
+test example 65:	 0.67 	 0.33 	0	0
+test example 66:	 0.982	 0.018	0	0
+test example 67:	 0.982	 0.018	0	0
+test example 68:	 0.982	 0.018	0	0
+test example 69:	 0.681	 0.319	0	0
+test example 70:	 0.681	 0.319	0	0
+test example 71:	 0.493	 0.507	1	0
+test example 72:	 0.681	 0.319	0	0
+test example 73:	 0.681	 0.319	0	0
+test example 74:	 0.871	 0.129	0	0
+test example 75:	 0.871	 0.129	0	0
+test example 76:	 0.608	 0.392	0	0
+test example 77:	 0.67 	 0.33 	0	0
+test example 78:	 0.67 	 0.33 	0	0
+test example 79:	 0.723	 0.277	0	0
+test example 80:	 0.681	 0.319	0	0
+test example 81:	 0.67 	 0.33 	0	0
+test example 82:	 0.871	 0.129	0	0
+test example 83:	 0.67 	 0.33 	0	0
+test example 84:	 0.67 	 0.33 	0	0
+test example 85:	 0.67 	 0.33 	0	0
+test example 86:	 0.67 	 0.33 	0	0
+test example 87:	 0.493	 0.507	1	0
+test example 88:	 0.871	 0.129	0	0
+test example 89:	 0.982	 0.018	0	0
+test example 90:	 0.723	 0.277	0	0
+test example 91:	 0.681	 0.319	0	0
+test example 92:	 0.694	 0.306	0	0
+test example 93:	 0.723	 0.277	0	0
+test example 94:	 0.67 	 0.33 	0	0
+test example 95:	 0.67 	 0.33 	0	0
+test example 96:	 0.608	 0.392	0	0
+test example 97:	 0.871	 0.129	0	0
+test example 98:	 0.17 	 0.83 	1	1
+test example 99:	 0.015	 0.985	1	1
+test example 100:	 0.007	 0.993	1	1
+test example 101:	 0.007	 0.993	1	1
+test example 102:	 0.015	 0.985	1	1
+test example 103:	 0.494	 0.506	1	1
+test example 104:	 0.67 	 0.33 	0	1
+test example 105:	 0.007	 0.993	1	1
+test example 106:	 0.007	 0.993	1	1
+test example 107:	 0.007	 0.993	1	1
+test example 108:	 0.694	 0.306	0	1
+test example 109:	 0.007	 0.993	1	1
+test example 110:	 0.007	 0.993	1	1
+test example 111:	 0.01 	 0.99 	1	1
+test example 112:	 0.493	 0.507	1	1
+test example 113:	 0.611	 0.389	0	1
+test example 114:	 0.007	 0.993	1	1
+test example 115:	 0.67 	 0.33 	0	1
+test example 116:	 0.09 	 0.91 	1	1
+test example 117:	 0.681	 0.319	0	1
+test example 118:	 0.234	 0.766	1	1
+test example 119:	 0.007	 0.993	1	1
+test example 120:	 0.681	 0.319	0	1
+test example 121:	 0.17 	 0.83 	1	1
+test example 122:	 0.493	 0.507	1	1
+test example 123:	 0.09 	 0.91 	1	1
+test example 124:	 0.493	 0.507	1	1
+test example 125:	 0.007	 0.993	1	1
+test example 126:	 0.015	 0.985	1	1
+test example 127:	 0.493	 0.507	1	1
+test example 128:	 0.67 	 0.33 	0	1
+test example 129:	 0.17 	 0.83 	1	1
+test example 130:	 0.015	 0.985	1	1
+test example 131:	 0.007	 0.993	1	1
+test example 132:	 0.493	 0.507	1	1
+test example 133:	 0.029	 0.971	1	1
+test example 134:	 0.67 	 0.33 	0	1
+test example 135:	 0.029	 0.971	1	1
+test example 136:	 0.494	 0.506	1	1
+test example 137:	 0.871	 0.129	0	1
+test example 138:	 0.67 	 0.33 	0	1
+test example 139:	 0.493	 0.507	1	1
+test example 140:	 0.09 	 0.91 	1	1
+test example 141:	 0.029	 0.971	1	1
+test example 142:	 0.67 	 0.33 	0	1
+test example 143:	 0.234	 0.766	1	1
+test example 144:	 0.007	 0.993	1	1
+test example 145:	 0.007	 0.993	1	1
+test example 146:	 0.007	 0.993	1	1
+test example 147:	 0.007	 0.993	1	1
+test example 148:	 0.608	 0.392	0	1
+test example 149:	 0.17 	 0.83 	1	1
+test example 150:	 0.029	 0.971	1	1
+test example 151:	 0.104	 0.896	1	1
+test example 152:	 0.152	 0.848	1	1
+test example 153:	 0.67 	 0.33 	0	1
+test example 154:	 0.681	 0.319	0	1
+test example 155:	 0.007	 0.993	1	1
+test example 156:	 0.007	 0.993	1	1
+test example 157:	 0.015	 0.985	1	1
+test example 158:	 0.493	 0.507	1	1
+test example 159:	 0.015	 0.985	1	1
+test example 160:	 0.015	 0.985	1	1
+test example 161:	 0.007	 0.993	1	1
+test example 162:	 0.67 	 0.33 	0	1
+test example 163:	 0.01 	 0.99 	1	1
+test example 164:	 0.09 	 0.91 	1	1
+test example 165:	 0.494	 0.506	1	1
+test example 166:	 0.007	 0.993	1	1
+test example 167:	 0.767	 0.233	0	1
+test example 168:	 0.015	 0.985	1	1
+test example 169:	 0.681	 0.319	0	1
+test example 170:	 0.01 	 0.99 	1	1
+test example 171:	 0.09 	 0.91 	1	1
+test example 172:	 0.681	 0.319	0	1
+test example 173:	 0.007	 0.993	1	1
+test example 174:	 0.029	 0.971	1	1
+test example 175:	 0.67 	 0.33 	0	1
+test example 176:	 0.007	 0.993	1	1
+test example 177:	 0.007	 0.993	1	1
+test example 178:	 0.142	 0.858	1	1
+test example 179:	 0.007	 0.993	1	1
+test example 180:	 0.015	 0.985	1	1
+test example 181:	 0.67 	 0.33 	0	1
+test example 182:	 0.67 	 0.33 	0	1
+test example 183:	 0.007	 0.993	1	1
+test example 184:	 0.17 	 0.83 	1	1
+test example 185:	 0.67 	 0.33 	0	1
+test example 186:	 0.007	 0.993	1	1
+test example 187:	 0.007	 0.993	1	1
+test example 188:	 0.17 	 0.83 	1	1
+test example 189:	 0.493	 0.507	1	1
+test example 190:	 0.67 	 0.33 	0	1
+test example 191:	 0.015	 0.985	1	1
+test example 192:	 0.67 	 0.33 	0	1
+test example 193:	 0.01 	 0.99 	1	1
+test example 194:	 0.608	 0.392	0	1
+test example 195:	 0.608	 0.392	0	1
+test example 196:	 0.007	 0.993	1	1
+test example 197:	 0.015	 0.985	1	1
+test example 198:	 0.681	 0.319	0	1
+test example 199:	 0.67 	 0.33 	0	1
+test example 200:	 0.007	 0.993	1	1
+test example 201:	 0.007	 0.993	1	1
+test example 202:	 0.09 	 0.91 	1	1
+test example 203:	 0.007	 0.993	1	1
+test example 204:	 0.494	 0.506	1	1
+test example 205:	 0.007	 0.993	1	1
+
+----------------------Bias-Variance Decomposition-------------------
+Classifier:	SKDB
+Dataset : train
+RMSE : 0.3522
+Error : 0.1845
+Training time :    380
+Testing time :     28

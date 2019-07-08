@@ -88,7 +88,7 @@ public class IndependentTest {
 			if(!M_estimation) {
 				classifiers[k].setLogStirlingCache(lgcache);
 			}
-			discretizer[k] = classifiers[k].buildClassifier(trainFile, generator);
+			discretizer[k] = classifiers[k].buildClassifier(trainFile, randomSeed);
 			randomSeed++;
 			System.out.println("The "+k+"th SKDB classifier has been built and smoothed");
 		}
@@ -126,9 +126,6 @@ public class IndependentTest {
 				probs[c] /= m_EnsembleSize;
 			}
 			
-//			for (int c = 0; c < nc; c++) {
-//				System.out.print(Utils.doubleToString(probs[c], 6, 4)+"\t");
-//			}
 			// ------------------------------------
 			// Update Error and RMSE
 			// ------------------------------------
@@ -147,7 +144,6 @@ public class IndependentTest {
 				}
 			}
 
-//			System.out.println(pred+"\t"+x_C);
 			if (pred != x_C) {
 				m_Error += 1;
 			}
@@ -167,8 +163,16 @@ public class IndependentTest {
 		
 		double testTime = System.currentTimeMillis() - start;
 
+		String smoothing ="";
+		if(M_estimation) {
+			smoothing = "M_estimation";
+		}else {
+			smoothing = "HDP";
+		}
+		
 		System.out.println("\n----------------------Bias-Variance Decomposition-------------------");
 		System.out.println("Classifier:\t" + m_S);
+		System.out.println("Smoothing: "+smoothing);
 		System.out.println("Dataset : " + strData);
 		System.out.println("RMSE : " + Utils.doubleToString(m_RMSE, 6,4));
 		System.out.println("Error : " + Utils.doubleToString(m_Error, 6, 4));
