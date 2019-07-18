@@ -79,7 +79,7 @@ public class TwoFoldCV {
 		int NTest = 0;
 		long seed = 3071980;
 		double trainTime = 0;
-
+		double testTime = 0;
 		long randomSeed = 1990093;
 
 		if (m_MVerb) {
@@ -192,7 +192,9 @@ public class TwoFoldCV {
 				}
 				lineNo++;
 			}
-
+			testTime += System.currentTimeMillis()-start;
+			System.out.println(testTime);
+			
 			if (m_MVerb) {
 				System.out.println("Testing time fold 1:\t" + (System.currentTimeMillis() - start));
 				System.out.println(
@@ -251,6 +253,7 @@ public class TwoFoldCV {
 			thisNTest = 0;
 			lineNo = 0;
 			reader = new ArffReader(new BufferedReader(new FileReader(sourceFile), BUFFER_SIZE), 100000);
+			start = System.currentTimeMillis();
 			while ((current = reader.readInstance(structure)) != null) {
 				if (test1Indexes.get(lineNo)) {
 
@@ -297,7 +300,7 @@ public class TwoFoldCV {
 				}
 				lineNo++;
 			}
-
+			testTime += System.currentTimeMillis()-start;
 			if (m_MVerb) {
 				System.out.println("test time fold 2:\t" + (System.currentTimeMillis() - start));
 				System.out.println(
@@ -315,6 +318,7 @@ public class TwoFoldCV {
 		m_RMSE = Math.sqrt(m_RMSE / NTest);
 		m_Error = m_Error / NTest;
 		trainTime = trainTime / (m_nExp * 2);
+		testTime  = testTime / (m_nExp *2);
 
 //		System.out.println("\n----------------------Bias-Variance Decomposition-------------------");
 //		System.out.println("Classifier:\t" + m_S);
@@ -323,7 +327,7 @@ public class TwoFoldCV {
 //		System.out.println("Error : " + Utils.doubleToString(m_Error, 6, 4));
 //		System.out.println("Training time : " + Utils.doubleToString(trainTime, 6, 0));
 		System.out.println("\t" + Utils.doubleToString(m_RMSE, 6, 4) + "\t" + Utils.doubleToString(m_Error, 6, 4) + '\t'
-				+ trainTime);
+				+ trainTime + "\t" + testTime);
 //		}
 	}
 

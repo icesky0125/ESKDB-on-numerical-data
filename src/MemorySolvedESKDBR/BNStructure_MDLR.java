@@ -76,27 +76,27 @@ public final class BNStructure_MDLR {
 		m_BestK_ = K;
 		m_BestattIt = nAttributes;
 		
-		learnStructureSKDB_R(sourceFile,discretizer,generator);
+//		learnStructureSKDB_R(sourceFile,discretizer,generator);
 
-//		switch (m_S) {
-//		case "NB":
-//			learnStructureNB();
-//			break;
-//		case "TAN":
-//			learnStructureTAN();
-//			break;
-//		case "KDB":
-//			learnStructureKDB();
-//			break;
-//		case "SKDB":
-//			learnStructureSKDB(structure, sourceFile);
-//			break;
-//		case "ESKDB_R":// SKDB with random discretization and sampled attribute orders
-//			learnStructureSKDB_R(structure, sourceFile);
-//			break;
-//		default:
-//			System.out.println("value of m_S has to be in set {NB,TAN,KDB,SKDB,ESKDB_R}");
-//		}
+		switch (m_S) {
+		case "NB":
+			learnStructureNB();
+			break;
+		case "TAN":
+			learnStructureTAN();
+			break;
+		case "KDB":
+			learnStructureKDB();
+			break;
+		case "SKDB":
+			learnStructureSKDB(structure, sourceFile);
+			break;
+		case "ESKDB_R":// SKDB with random discretization and sampled attribute orders
+			learnStructureSKDB_R(sourceFile,discretizer,generator);
+			break;
+		default:
+			System.out.println("value of m_S has to be in set {NB,TAN,KDB,SKDB,ESKDB_R}");
+		}
 	}
 
 	private void learnStructureKDB() {
