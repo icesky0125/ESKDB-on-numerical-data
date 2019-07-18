@@ -11,6 +11,7 @@ import java.io.IOException;
 import java.util.Arrays;
 import java.util.BitSet;
 import org.apache.commons.math3.random.MersenneTwister;
+import Method.SmoothingMethod;
 import hdp.logStirling.LogStirlingFactory;
 import hdp.logStirling.LogStirlingGenerator;
 import weka.classifiers.AbstractClassifier;
@@ -30,10 +31,11 @@ public class TwoFoldCV {
 	private static int m_nExp = 5;
 	public static final int BUFFER_SIZE = 10 * 1024 * 1024; // 100MB
 	private static int m_IterGibbs;
-	private static boolean M_estimation = false; // default: using HDP
+//	private static boolean M_estimation = false; // default: using HDP
 	private static int m_EnsembleSize = 20; // -E
 	private static boolean m_Backoff = false;
 	private static int m_Tying = 2; // -L
+	protected static SmoothingMethod method = SmoothingMethod.HGS;
 
 	public static LogStirlingGenerator lgcache = null;
 
@@ -70,7 +72,8 @@ public class TwoFoldCV {
 		System.out.println("class size \t" + nc);
 		System.out.print(strData + "\t");
 
-		if (!M_estimation) {
+		// With the HDP method, all base classifiers can share the same cache
+		if (method == SmoothingMethod.HDP) {
 			lgcache = LogStirlingFactory.newLogStirlingGenerator(N, 0);
 		}
 
@@ -104,7 +107,8 @@ public class TwoFoldCV {
 			wdBayesOnlinePYP_MDLR learner = new wdBayesOnlinePYP_MDLR();
 			learner.set_m_S(m_S);
 			learner.setK(m_K);
-			learner.setMEstimation(M_estimation);
+//			learner.setMEstimation(M_estimation);
+			learner.setSmoothingMethod(method); // HDP, M-estimation, or HGS
 			learner.setGibbsIteration(m_IterGibbs);
 			learner.setBackoff(m_Backoff);
 			learner.setTying(m_Tying);
@@ -112,9 +116,6 @@ public class TwoFoldCV {
 
 			// creating tempFile for train0
 			File trainFile = createTrainTmpFile(sourceFile, structure, test0Indexes);
-			
-//			System.out.println(readFile2Instances(trainFile).firstInstance());
-//			System.out.println(readFile2Instances(trainFile).numInstances());
 
 			long start = System.currentTimeMillis();
 			wdBayesOnlinePYP_MDLR[] classifiers = new wdBayesOnlinePYP_MDLR[m_EnsembleSize];
@@ -126,9 +127,10 @@ public class TwoFoldCV {
 //				Random generator = new Random(randomSeed);
 				classifiers[k] = (wdBayesOnlinePYP_MDLR) AbstractClassifier.makeCopy(learner);
 
-				if (!M_estimation) {
+				if (method == SmoothingMethod.HDP) {
 					classifiers[k].setLogStirlingCache(lgcache);
 				}
+				
 				discretizer[k] = classifiers[k].buildClassifier(trainFile, randomSeed);
 				randomSeed++;
 			}
@@ -217,7 +219,8 @@ public class TwoFoldCV {
 			learner = new wdBayesOnlinePYP_MDLR();
 			learner.set_m_S(m_S);
 			learner.setK(m_K);
-			learner.setMEstimation(M_estimation);
+//			learner.setMEstimation(M_estimation);
+			learner.setSmoothingMethod(method); // HDP, M-estimation, or HGS
 			learner.setGibbsIteration(m_IterGibbs);
 			learner.setBackoff(m_Backoff);
 			learner.setTying(m_Tying);
@@ -233,7 +236,7 @@ public class TwoFoldCV {
 //				Random generator = new Random(randomSeed);
 				classifiers[k] = (wdBayesOnlinePYP_MDLR) AbstractClassifier.makeCopy(learner);
 
-				if (!M_estimation) {
+				if (method == SmoothingMethod.HDP) {
 					classifiers[k].setLogStirlingCache(lgcache);
 				}
 
@@ -323,6 +326,7 @@ public class TwoFoldCV {
 //		System.out.println("\n----------------------Bias-Variance Decomposition-------------------");
 //		System.out.println("Classifier:\t" + m_S);
 //		System.out.println("Dataset : " + strData);
+//		System.out.println("Smoothing : " + method.toString());
 //		System.out.println("RMSE : " + Utils.doubleToString(m_RMSE, 6,4));
 //		System.out.println("Error : " + Utils.doubleToString(m_Error, 6, 4));
 //		System.out.println("Training time : " + Utils.doubleToString(trainTime, 6, 0));
@@ -341,8 +345,8 @@ public class TwoFoldCV {
 		}
 
 		m_MVerb = Utils.getFlag('V', options);
-		M_estimation = Utils.getFlag('M', options);
-		m_Backoff = Utils.getFlag('B', options);
+//		M_estimation = Utils.getFlag('M', options);
+//		m_Backoff = Utils.getFlag('B', options);
 
 		string = Utils.getOption('S', options);
 		if (string.length() != 0) {
@@ -352,6 +356,19 @@ public class TwoFoldCV {
 		string = Utils.getOption('K', options);
 		if (string.length() != 0) {
 			m_K = Integer.parseInt(string);
+		}
+		
+		string = Utils.getOption('m', options);
+		if (string.length() != 0) {
+			if (string.equalsIgnoreCase("HGS")) {
+				method = SmoothingMethod.HGS;
+			} else if (string.equalsIgnoreCase("HDP")) {
+				method = SmoothingMethod.HDP;
+			} else if (string.equalsIgnoreCase("MESTIMATION")) {
+				method = SmoothingMethod.M_estimation;
+			} else if (string.equalsIgnoreCase("LAPLACE")) {
+				method = SmoothingMethod.LAPLACE;
+			}
 		}
 
 		String ML = Utils.getOption('L', options);

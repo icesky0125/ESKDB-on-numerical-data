@@ -10,7 +10,9 @@ import java.util.Random;
 
 import org.apache.commons.math3.util.FastMath;
 import ESKDB.xxyDist;
+import Method.SmoothingMethod;
 import hdp.ProbabilityTree;
+import hdp.logStirling.LogStirlingFactory;
 import hdp.logStirling.LogStirlingGenerator;
 import tools.SUtils;
 import weka.classifiers.Classifier;
@@ -48,6 +50,10 @@ public final class wdBayesOnlinePYP_MDLR implements Classifier, java.io.Serializ
 	
 	// added by Matthieu Herrmann
 	public LogStirlingGenerator lgcache = null;
+	
+	//added by He Zhang: for HGS smoothing
+	protected SmoothingMethod method = SmoothingMethod.M_estimation;
+	private long m_seed;
 	
 
 	/**
@@ -160,19 +166,18 @@ public final class wdBayesOnlinePYP_MDLR implements Classifier, java.io.Serializ
 		m_Instances = null;
 		structure = null;
 		
-		if (this.m_MVerb) {
-			System.out.println("************** Probability Smoothing Started **************");
-		}
-
-		if (M_estimation) {
+		switch (method) {
+		case M_estimation:
 			for (int u = 0; u < this.m_Order.length; u++) {
 				ProbabilityTree tree = dParameters_.getPypTrees()[u];
 				tree.convertCountToProbs(m_BackOff);
 			}
-		} else {
+			
+			break;
+		case HDP:
 			// HDP smoothing
 			// sharing one cache for all the trees
-//			lgcache = LogStirlingFactory.newLogStirlingGenerator(nInstances, 0);
+			lgcache = LogStirlingFactory.newLogStirlingGenerator(nInstances, 0);
 
 			for (int u = 0; u < this.m_Order.length; u++) {
 				ProbabilityTree tree = dParameters_.getPypTrees()[u];
@@ -182,14 +187,30 @@ public final class wdBayesOnlinePYP_MDLR implements Classifier, java.io.Serializ
 				if (m_MVerb)
 					System.out.println("Tree for attribute " + u + " has been smoothed");
 			}
+			
+			break;
+		case HGS:
+//			System.out.println("HGS smoothing");
+			ProbabilityTree tree;
+			for (int u = 0; u < this.m_Order.length; u++) {
+				System.out.println("u=="+m_Order[u]);
+				tree = dParameters_.getPypTrees()[u];// tree for m_Order[u]
+				tree.setNumInstances(this.nInstances);
+				
+				tree.prune(); // remove the children of some pure nodes, experiment show this is necessary when using HGS 
+				
+				tree.HGSsmoothing();
+				System.out.println("HGS smoothed tree:\n"+tree.printFinalPksForHGS());
+			}
+			
+			break;
+		default:
+			break;
 		}
 		
 		if (this.m_MVerb) {
 			System.out.println("************** Probability Smoothing Finished **************");
 		}
-		
-//		for(int i =0; i < dParameters_.getPypTrees().length; i++)
-//			System.out.println(dParameters_.getPypTrees()[i].printFinalPks());
 		
 		return discretizer;
 	}
@@ -279,5 +300,13 @@ public final class wdBayesOnlinePYP_MDLR implements Classifier, java.io.Serializ
 	public void setLogStirlingCache(LogStirlingGenerator lg) {
 	
 		this.lgcache = lg;
+	}
+	
+	public void setSmoothingMethod(SmoothingMethod method2) {
+		method = method2;
+	}
+
+	public void setSeed(long s) {
+		this.m_seed = s;
 	}
 }

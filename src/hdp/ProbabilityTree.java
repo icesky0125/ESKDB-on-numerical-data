@@ -3,6 +3,7 @@ package hdp;
 import java.security.NoSuchAlgorithmException;
 import java.security.SecureRandom;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.HashMap;
 
 import org.apache.commons.math3.random.MersenneTwister;
@@ -14,6 +15,7 @@ import hdp.logStirling.LogStirlingFactory;
 import hdp.logStirling.LogStirlingGenerator;
 import hdp.logStirling.LogStirlingGenerator.CacheExtensionException;
 import mltools.MathUtils;
+import weka.core.Utils;
 
 public class ProbabilityTree {
 
@@ -36,6 +38,14 @@ public class ProbabilityTree {
 	int[] nValuesContioningVariables;
 	protected int nDatapoints;
 	boolean createFullTree = false;
+	
+	// added for HGS
+	ArrayList<ProbabilityNode> leaves = new ArrayList<ProbabilityNode>();
+	ArrayList<ProbabilityNode> alphaList = new ArrayList<ProbabilityNode>();
+	double precision = 0.00001;
+	double step = 0.001;
+	double[] bestConcentration = null;
+	int NInstance;
 
 	// Constructors
 
@@ -360,10 +370,12 @@ public class ProbabilityTree {
 	public double[] query(int[] sample) {
 		ProbabilityNode node = root;
 		for (int n = 0; n < sample.length; n++) {
-			if (node.children[sample[n]] != null) {
-				node = node.children[sample[n]];
-			} else {
-				break;
+			if(node.children != null) {
+				if (node.children[sample[n]] != null) {
+					node = node.children[sample[n]];
+				} else {
+					break;
+				}
 			}
 		}
 		return node.pkAveraged;
@@ -523,5 +535,332 @@ public class ProbabilityTree {
 
 	public void convertCountToProbs(boolean m_BackOff) {
 		root.convertCountToProbsBackOff(m_BackOff);
+	}
+
+	public void setNumInstances(int n) {
+		this.NInstance = n;
+	}
+	
+	// ----------------------------------------------------HGS smoothing ------------------------------------------
+
+	public void HGSsmoothing() {
+		// 1. get all the internal nodes and the leaves under each internal node
+		treeTraversal(root);
+		
+//		System.out.println("LOO estimated tree:\n"+this.printPks());
+		
+		// 2. perform gradient descent
+		stepGradientLogLoss();
+		
+		// 3. get the final probabilities at leaves
+		double[] sumalpk = new double[this.nValuesConditionedVariable];
+		calculatePkForLeavesLogLoss(root, 0, sumalpk, false); 
+		// false means calculate final pk, true means calculateLOOCV cost
+	
+	}
+	
+	/**
+	 * traverse the tree top down to calculate the LOO estimate for internal nodes
+	 * nodes
+	 */
+	public void treeTraversal(ProbabilityNode node) {
+		if (node.pk == null) {
+			node.pk = new double[this.nValuesConditionedVariable];
+		}
+
+		if (node.isLeaf()) {
+			leaves.add(node);
+			return;
+		}
+
+		alphaList.add(node);
+		node.leavesUnderThisNode = new ArrayList<ProbabilityNode>();
+
+		int sum = Utils.sum(node.nk);
+		for (int i = 0; i < this.nValuesConditionedVariable; i++) {
+			
+			if (node.nk[i] > 1)
+				node.pk[i] = (double) (node.nk[i] - 1) / (sum - 1);
+			else {
+				node.pk[i] = 0;
+			}
+		}
+
+		if (node.children != null) {
+			for (int c = 0; c < node.children.length; c++) {
+				if (node.children[c] != null) {
+					treeTraversal(node.children[c]);
+					if (node.children[c].isLeaf())
+						node.leavesUnderThisNode.add(node.children[c]);
+					else {
+						node.leavesUnderThisNode.addAll(node.children[c].leavesUnderThisNode);
+					}
+				}
+			}
+		}
+	}
+
+	//--------------------------------------------------- MSE cost function------------------------------------
+	public void stepGradient() {
+		double currentCost = LOOCVCost();
+		double costDifference = currentCost;
+		int iter = 0;
+		double newCost = 0;
+		while (costDifference > this.precision) {
+			// currentCost = this.LOOCVCost();
+			ProbabilityNode node;
+			for (int i = 0; i < this.alphaList.size(); i++) {
+				node = alphaList.get(i);
+				node.alpha -= step * node.partialDerivative;
+			}
+			newCost = this.LOOCVCost();
+			costDifference = currentCost - newCost;
+			currentCost = newCost;
+			// System.out.println(currentCost);
+			iter++;
+		}
+//		System.out.println("\ngradient descend: " + iter + "\t" + newCost);
+
+	}
+	
+	/**
+	 * Minimize the cost function
+	 */
+	private double LOOCVCost() {
+
+		double[] sumpk = new double[nValuesConditionedVariable];
+
+		// get probability of all the nodes
+		calculatePkForLeaves(root, 0, sumpk, true);
+
+		double loocvCost = 0;
+		for (int c = 0; c < this.leaves.size(); c++) {
+			ProbabilityNode node = leaves.get(c);
+
+			for (int k = 0; k < this.nValuesConditionedVariable; k++) {
+				if(node.nk[k] > 1)
+					loocvCost += node.nk[k] * Math.pow(1 - node.pk[k], 2);
+			}
+		}
+
+		loocvCost /= (2 * NInstance);
+		return loocvCost;
+	}
+
+	//--------------------------------------------------- log loss cost function ------------------------------------
+	
+	private void stepGradientLogLoss() {
+		double currentCost = LOOCVCostLogLoss(); // alphas are all initialized as 2
+		double costDifference = currentCost;
+		int iter = 0;
+		double newCost = 0;
+		ProbabilityNode node;
+
+		while (costDifference > this.precision) {
+
+			for (int i = 0; i < this.alphaList.size(); i++) {
+
+				node = this.alphaList.get(i);
+				node.alpha -= step * node.partialDerivative;
+			}
+			newCost = this.LOOCVCostLogLoss();
+
+			costDifference = currentCost - newCost;
+			currentCost = newCost;
+			iter++;
+		}
+		System.out.println("iterations needed: "+iter);
+	}
+	
+	/**
+	 * Minimize the Log cost function
+	 */
+	private double LOOCVCostLogLoss() {
+
+		double[] sumpk = new double[nValuesConditionedVariable];
+		// get probability of all the nodes
+		calculatePkForLeavesLogLoss(root, 0, sumpk, true);
+
+		double loocvCost = 0;
+		for (int c = 0; c < this.leaves.size(); c++) {
+			ProbabilityNode node = leaves.get(c);
+
+			for (int k = 0; k < this.nValuesConditionedVariable; k++) {
+				if(node.nk[k] > 1)
+					loocvCost -= node.nk[k] * Math.log(node.pk[k]) / Math.log(2);
+			}
+		}
+
+		loocvCost /= NInstance;
+
+		return loocvCost;
+	}
+
+	public void calculatePkForLeavesLogLoss(ProbabilityNode node, double sumalpha, double[] sumpk, boolean isGD) {
+
+		if (node.isLeaf()) {
+
+			if (isGD) {
+				node.alc = new double[this.nValuesConditionedVariable];
+				for (int i = 0; i < this.nValuesConditionedVariable; i++) {
+					if (node.nk[i] > 0) {
+						node.pk[i] = (node.nk[i] - 1 + sumpk[i]) / (Utils.sum(node.nk) - 1 + sumalpha);
+						node.alc[i] = node.nk[i] / (Utils.sum(node.nk) - 1 + sumalpha); // belta_l,k
+					}
+				}
+			} else {
+				node.pkAveraged = new double[this.nValuesConditionedVariable];
+				
+				for (int i = 0; i < this.nValuesConditionedVariable; i++) {
+					if(Double.isNaN(sumpk[i])) {
+						System.out.println("sumpk[i] is nan: "+Arrays.toString(sumpk));
+					}
+					
+					node.pkAveraged[i] = Utils.roundDouble((node.nk[i] + sumpk[i]) / (Utils.sum(node.nk) + sumalpha),4);
+					
+				}
+			}
+			return;
+		}
+
+		// calculate sumPK and sumAlpha
+		sumalpha += node.alpha;
+		if (isGD) {
+			for (int i = 0; i < this.nValuesConditionedVariable; i++) {
+				sumpk[i] += node.pk[i] * node.alpha;
+			}
+
+		} else {
+			// calculate pk for parents
+			int sum = Utils.sum(node.nk);
+			node.pkAveraged = new double[this.nValuesConditionedVariable];
+			for (int i = 0; i < this.nValuesConditionedVariable; i++) {
+				 node.pkAveraged[i] = tools.SUtils.MEsti(node.nk[i], sum, this.nValuesConditionedVariable); //M-estimation for internal nodes
+//				node.pkAveraged[i] = (double) node.nk[i] / sum;
+				// node.pkAveraged[i] = (double) (node.nk[i]+1)/(sum+this.nValuesConditionedVariable); // Laplace for internal nodes
+			}
+
+			tools.SUtils.normalize(node.pkAveraged);
+			// sumPk to calculate the final estimates for leaves
+			for (int i = 0; i < this.nValuesConditionedVariable; i++) {
+				sumpk[i] += node.pkAveraged[i] * node.alpha;
+			}
+		}
+
+		// children
+		if (node.children != null) {
+			for (int s = 0; s < node.children.length; s++) {
+				if( node.children[s] != null) {
+					calculatePkForLeavesLogLoss(node.children[s], sumalpha, sumpk, isGD);
+				}
+			}
+
+			sumalpha -= node.alpha;
+			for (int i = 0; i < this.nValuesConditionedVariable; i++) {
+				sumpk[i] -= node.pk[i] * node.alpha;
+			}
+		}
+
+		if (isGD) {
+			// calculate partial derivative for each internal node
+			if (node.leavesUnderThisNode != null) {
+				node.partialDerivative = 0;
+
+				for (int c = 0; c < node.leavesUnderThisNode.size(); c++) {
+					ProbabilityNode son = node.leavesUnderThisNode.get(c);
+					for (int k = 0; k < this.nValuesConditionedVariable; k++) {
+						node.partialDerivative += son.alc[k] / son.pk[k] * (son.pk[k] - node.pk[k]);
+					}
+				}
+				node.partialDerivative = 1/(NInstance * Math.log(2));
+			}
+		}
+	}
+
+	public void calculatePkForLeaves(ProbabilityNode node, double sumalpha, double[] sumpk, boolean isGD) {
+		if (node.isLeaf()) {
+			if (isGD) {
+				node.alc = new double[this.nValuesConditionedVariable];
+				for (int i = 0; i < this.nValuesConditionedVariable; i++) {
+					if (node.nk[i] > 0) {
+						node.pk[i] = (node.nk[i] - 1 + sumpk[i]) / (Utils.sum(node.nk) - 1 + sumalpha);
+						node.alc[i] = node.nk[i] * (1 - node.pk[i]) / (Utils.sum(node.nk) - 1 + sumalpha);
+					}
+				}
+			} else {
+				node.pkAveraged = new double[this.nValuesConditionedVariable];
+				for (int i = 0; i < this.nValuesConditionedVariable; i++) {
+					node.pkAveraged[i] = (node.nk[i] + sumpk[i]) / (Utils.sum(node.nk) + sumalpha);
+				}
+			}
+			return;
+		}
+
+		sumalpha += node.alpha;
+		int sum = Utils.sum(node.nk);
+		if (isGD) {
+			for (int i = 0; i < this.nValuesConditionedVariable; i++) {
+				sumpk[i] += node.pk[i] * node.alpha; // pk saves the LOO estimate
+			}
+		} else {
+			for (int i = 0; i < this.nValuesConditionedVariable; i++) {
+				// node.pk[i] = SUtils.MEsti(node.nk[i], sum, this.m_nc);
+				node.pk[i] = (double) node.nk[i] / sum;
+				// node.pk[i] = (double) (node.nk[i]+1)/(sum+this.m_nc);
+			}
+
+			tools.SUtils.normalize(node.pk);
+
+			//
+			for (int i = 0; i < this.nValuesConditionedVariable; i++) {
+				sumpk[i] += node.pk[i] * node.alpha;
+			}
+		}
+
+		// first recur on left subtree
+		if (node.children != null) {
+			for (int s = 0; s < node.children.length; s++) {
+				if (node.children[s] != null)
+					calculatePkForLeaves(node.children[s], sumalpha, sumpk, isGD);
+			}
+			sumalpha -= node.alpha;
+			for (int i = 0; i < this.nValuesConditionedVariable; i++) {
+				sumpk[i] -= node.pk[i] * node.alpha;
+			}
+		}
+
+		// now deal with the node
+		// System.out.print(Arrays.toString(node.nk) + " ");
+		if (isGD) {
+			if (node.leavesUnderThisNode != null) {
+				node.partialDerivative = 0;
+				for (int c = 0; c < node.leavesUnderThisNode.size(); c++) {
+					ProbabilityNode son = node.leavesUnderThisNode.get(c);
+					for (int k = 0; k < this.nValuesConditionedVariable; k++) {
+						node.partialDerivative += 2 * son.alc[k] * (son.pk[k] - node.pk[k]);
+//						node.partialDerivative += son.alc[k] * (son.pk[k] - node.pk[k]);
+					}
+				}
+			}
+			node.partialDerivative /= this.NInstance;
+
+		}
+//		else {
+//			if(node.pkAveraged == null) {
+//				node.pkAveraged  = new double[nValuesConditionedVariable];
+//				for (int i = 0; i < this.nValuesConditionedVariable; i++) {
+//					node.pkAveraged[i] = (node.nk[i] + sumpk[i]) / (Utils.sum(node.nk) + sumalpha);
+//				}
+//			}
+//		}
+	}
+
+	public void prune() {
+
+		this.root.prune();	
+	}
+
+	public String printFinalPksForHGS() {
+		return root.printAccumulatedPksRecursivelyHGS("root");
 	}
 }

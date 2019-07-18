@@ -58,6 +58,13 @@ public class ProbabilityNode {
 	ProbabilityNode parent;
 	ProbabilityNode[] children;
 	ProbabilityTree tree;
+	
+	// added by He Zhang
+	private boolean m_BackOff;
+	public ArrayList<ProbabilityNode> leavesUnderThisNode;
+	public double[] alc;
+	public double partialDerivative;
+	public double alpha = 2;
 
 	public ProbabilityNode(ProbabilityTree probabilityTree, int varNumberForBanchingChildren) {
 		this(probabilityTree, varNumberForBanchingChildren, false);
@@ -77,7 +84,7 @@ public class ProbabilityNode {
 				children[i] = new ProbabilityNode(this, varNumberForBanchingChildren + 1, createFullTree);
 			}
 		}
-
+		alpha = 2;
 	}
 
 	public ProbabilityNode(ProbabilityNode parent, int varNumberForBanchingChildren) {
@@ -240,7 +247,8 @@ public class ProbabilityNode {
 		res += prefix + ":nk=" + Arrays.toString(nk) + "\n";
 		if (children != null) {
 			for (int c = 0; c < children.length; c++) {
-				res += children[c].printNksRecursively(prefix + " -> " + c);
+				if(children[c] != null)
+					res += children[c].printNksRecursively(prefix + " -> " + c);
 			}
 		}
 		return res;
@@ -660,4 +668,51 @@ public class ProbabilityNode {
 		}
 	}
 
+	public void prune() {
+		boolean pure = false;
+		
+		// check if the current node is pure
+		if(!this.isLeaf()) {
+			for(int i = 0; i < this.nk.length; i++) {
+				if(this.nk[i] == this.marginal_nk) {
+					if(this.children != null) {
+						this.children = null;
+					}
+					System.out.println("remove the children because the current node is pure");
+					pure = true;
+					break;
+				}
+			}
+		}
+		
+		// check if the children are pure or not.
+		if(!pure) {
+			if(this.children != null) {
+				for(int c = 0; c < children.length; c++) {
+					if(children[c] != null)
+						children[c].prune();
+				}
+			}
+		}	
+	}
+
+	public String printAccumulatedPksRecursivelyHGS(String prefix) {
+		String res = "";
+
+		// root node
+		if(!this.isLeaf())
+			res += prefix + ":pk=" + Arrays.toString(pkAveraged) + " alpha=" + this.alpha + "\n";
+		else {
+			res += prefix + ":pk=" + Arrays.toString(pkAveraged) + "\n";
+		}
+		if (children != null) {
+			for (int c = 0; c < children.length; c++) {
+				if (children[c] != null) {
+					res += children[c].printAccumulatedPksRecursivelyHGS(prefix + " -> " + c);
+				}
+			}
+		}
+		return res;
+	}
+	
 }
