@@ -91,7 +91,7 @@ public final class BNStructure_MDLR {
 		case "SKDB":
 			learnStructureSKDB(structure, sourceFile);
 			break;
-		case "ESKDB_R":// SKDB with random discretization and sampled attribute orders
+		case "ESKDB":// SKDB with random discretization and sampled attribute orders
 			learnStructureSKDB_R(sourceFile,discretizer,generator);
 			break;
 		default:

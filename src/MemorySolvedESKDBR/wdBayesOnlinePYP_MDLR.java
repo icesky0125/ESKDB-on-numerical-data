@@ -42,7 +42,7 @@ public final class wdBayesOnlinePYP_MDLR implements Classifier, java.io.Serializ
 
 	// added by He Zhang
 	private static boolean M_estimation = false;
-	private boolean m_BackOff;
+	private boolean m_BackOff = true;
 	int[] m_Order;
 	int[][] m_Parents;
 	int m_BestK_ = 0; 
@@ -171,6 +171,7 @@ public final class wdBayesOnlinePYP_MDLR implements Classifier, java.io.Serializ
 			for (int u = 0; u < this.m_Order.length; u++) {
 				ProbabilityTree tree = dParameters_.getPypTrees()[u];
 				tree.convertCountToProbs(m_BackOff);
+				System.out.println(tree.printFinalPks());
 			}
 			
 			break;
@@ -222,13 +223,16 @@ public final class wdBayesOnlinePYP_MDLR implements Classifier, java.io.Serializ
 			//probs[c] = FastMath.log(xxyDist_.xyDist_.pp(c));// P(y)
 			probs[c] = xxyDist_.xyDist_.pp(c);// P(y)
 		}
-
+		System.out.println(Arrays.toString(probs));
 		for (int u = 0; u < m_BestattIt; u++) {
+			
 			for (int c = 0; c < nc; c++) {
 				double prob = dParameters_.query(instance,u,c);
+				// if prob  = 0, then probs[c] becomes infinity
 				probs[c] += FastMath.log(prob);
 			}
 		}
+		
 		SUtils.normalizeInLogDomain(probs);
 		SUtils.exp(probs);
 

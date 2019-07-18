@@ -378,6 +378,7 @@ public class ProbabilityTree {
 				}
 			}
 		}
+
 		return node.pkAveraged;
 	}
 
