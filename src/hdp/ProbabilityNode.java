@@ -573,7 +573,7 @@ public class ProbabilityNode {
 		pkAveraged = new double[nk.length];
 		if (MathUtils.sum(nk) != 0) {
 			for (int i = 0; i < nk.length; i++) {
-				pkAveraged[i] = Utils.roundDouble(SUtils.MEsti(nk[i], marginal_nk, nk.length),4);
+				pkAveraged[i] = SUtils.MEsti(nk[i], marginal_nk, nk.length);
 			}
 		} else {
 			if (m_BackOff) {

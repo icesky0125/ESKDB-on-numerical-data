@@ -171,7 +171,6 @@ public final class wdBayesOnlinePYP_MDLR implements Classifier, java.io.Serializ
 			for (int u = 0; u < this.m_Order.length; u++) {
 				ProbabilityTree tree = dParameters_.getPypTrees()[u];
 				tree.convertCountToProbs(m_BackOff);
-				System.out.println(tree.printFinalPks());
 			}
 			
 			break;
@@ -223,7 +222,7 @@ public final class wdBayesOnlinePYP_MDLR implements Classifier, java.io.Serializ
 			//probs[c] = FastMath.log(xxyDist_.xyDist_.pp(c));// P(y)
 			probs[c] = xxyDist_.xyDist_.pp(c);// P(y)
 		}
-		System.out.println(Arrays.toString(probs));
+		
 		for (int u = 0; u < m_BestattIt; u++) {
 			
 			for (int c = 0; c < nc; c++) {

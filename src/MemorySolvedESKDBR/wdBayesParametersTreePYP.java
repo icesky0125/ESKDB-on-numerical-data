@@ -113,7 +113,6 @@ public class wdBayesParametersTreePYP {
 
 		int targetNodeValue = (int) instance.value(order[targetNode]);
 		double[] prob = tree.query(datapoint);
-		
 		return prob[targetNodeValue];
 	}
 
