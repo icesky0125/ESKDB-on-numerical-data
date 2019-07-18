@@ -89,7 +89,7 @@ public final class BNStructure_MDLR {
 			learnStructureKDB();
 			break;
 		case "SKDB":
-			learnStructureSKDB(structure, sourceFile);
+			learnStructureSKDB(structure, sourceFile,discretizer);
 			break;
 		case "ESKDB":// SKDB with random discretization and sampled attribute orders
 			learnStructureSKDB_R(sourceFile,discretizer,generator);
@@ -156,7 +156,7 @@ public final class BNStructure_MDLR {
 
 	}
 	
-	private void learnStructureSKDB(Instances structure, File sourceFile) throws FileNotFoundException, IOException {
+	private void learnStructureSKDB(Instances structure, File sourceFile, MDLR discretizer) throws FileNotFoundException, IOException {
 		int m_KDB = m_BestK_;
 
 		double[] mi = new double[nAttributes];
@@ -210,7 +210,7 @@ public final class BNStructure_MDLR {
 		Instance instance;
 		int N = 0;
 		while ((instance = reader.readInstance(structure)) != null) {
-			
+			instance = discretizer.discretize(instance);
 			dParameters_.update(instance);
 			N++;
 		}
@@ -230,7 +230,7 @@ public final class BNStructure_MDLR {
 		structure.setClassIndex(structure.numAttributes()-1);
 		while ((instance = reader.readInstance(structure)) != null) {
 			int x_C = (int) instance.classValue();
-
+			instance = discretizer.discretize(instance);
 			for (int y = 0; y < nc; y++) {
 				posteriorDist[0][y] = dParameters_.ploocv(y, x_C);
 			}
