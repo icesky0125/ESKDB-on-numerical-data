@@ -60,7 +60,7 @@ public class TwoFoldESKDBDiscretizeTraining {
 		File files = new File(data);
 		File[] folder = files.listFiles();
 		Arrays.sort(folder);
-		for (int d = 0; d < 15; d++) {
+		for (int d = 29; d < 30; d++) {
 			
 			File sourceFile = folder[d];
 //		File sourceFile = new File(data);
@@ -72,17 +72,13 @@ public class TwoFoldESKDBDiscretizeTraining {
 			int N = getNumData(sourceFile, structure);
 			String name = folder[d].getName();
 			String strData = name.substring(name.lastIndexOf("/") + 1, name.lastIndexOf("."));
-//			System.out.println("Dataset : " + strData);
-//			System.out.println("data size \t" + N);
-//			System.out.println("Attribute size \t" + structure.numAttributes());
-//			System.out.println("class size \t" + nc);
 			System.out.print(strData+"\t");
 			double m_RMSE = 0;
 			double m_Error = 0;
 			int NTest = 0;
 			long seed = 3071980;
 			double trainTime = 0;
-
+			double testTime = 0;
 			if (m_MVerb) {
 				System.out.println("A 5 times 2-fold cross-validation will be started.");
 			}
@@ -182,7 +178,7 @@ public class TwoFoldESKDBDiscretizeTraining {
 					thisNTest++;
 					NTest++;
 				}
-
+				testTime += System.currentTimeMillis()-start;
 				if (m_MVerb) {
 					System.out.println("Testing time fold 1:\t" + (System.currentTimeMillis() - start));
 					System.out.println(
@@ -274,6 +270,7 @@ public class TwoFoldESKDBDiscretizeTraining {
 
 					NTest++;
 				}
+				testTime += System.currentTimeMillis()-start;
 
 				if (m_MVerb) {
 					System.out.println("test time fold 2:\t" + (System.currentTimeMillis() - start));
@@ -288,6 +285,7 @@ public class TwoFoldESKDBDiscretizeTraining {
 			m_RMSE = Math.sqrt(m_RMSE / NTest);
 			m_Error = m_Error / NTest;
 			trainTime = trainTime / (m_nExp*2);
+			testTime = testTime / (m_nExp*2);
 
 //			System.out.println("\n----------------------Bias-Variance Decomposition-------------------");
 //			System.out.println("Classifier:\t" + m_S);
@@ -295,7 +293,7 @@ public class TwoFoldESKDBDiscretizeTraining {
 //			System.out.println("RMSE : " + Utils.doubleToString(m_RMSE, 6, 4));
 //			System.out.println("Error : " + Utils.doubleToString(m_Error, 6, 4));
 //			System.out.println("Training time : " + Utils.doubleToString(trainTime, 6, 0));
-		System.out.println(Utils.doubleToString(m_RMSE, 6, 4)+ "\t" + Utils.doubleToString(m_Error, 6, 4) +'\t'+Utils.doubleToString(trainTime, 6, 0));
+		System.out.println(Utils.doubleToString(m_RMSE, 6, 4)+ "\t" + Utils.doubleToString(m_Error, 6, 4) +'\t'+Utils.doubleToString(trainTime, 6, 0)+'\t'+Utils.doubleToString(testTime, 6, 0));
 		}
 	}
 

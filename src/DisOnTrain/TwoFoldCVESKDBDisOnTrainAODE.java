@@ -52,7 +52,7 @@ public class TwoFoldCVESKDBDisOnTrainAODE {
 		File[] folder = sourceFile.listFiles();
 		Arrays.sort(folder);
 		int size = folder.length;
-		for (int f = m_BeginData; f < size; f++) {
+		for (int f = 1; f < 2; f++) {
 			sourceFile = folder[f];
 
 			ArffReader reader = new ArffReader(new BufferedReader(new FileReader(sourceFile), BUFFER_SIZE), 100000);
@@ -73,7 +73,7 @@ public class TwoFoldCVESKDBDisOnTrainAODE {
 			int NTest = 0;
 			long seed = 3071980;
 			double trainTime = 0;
-
+			double testTime = 0;
 			if (m_MVerb) {
 				System.out.println("A 5 times 2-fold cross-validation will be started.");
 			}
@@ -166,7 +166,7 @@ public class TwoFoldCVESKDBDisOnTrainAODE {
 					thisNTest++;
 					NTest++;
 				}
-
+				testTime += System.currentTimeMillis()-start;
 				if (m_MVerb) {
 					System.out.println("Testing time fold 1:\t" + (System.currentTimeMillis() - start));
 					System.out.println(
@@ -258,7 +258,7 @@ public class TwoFoldCVESKDBDisOnTrainAODE {
 					thisNTest++;
 					NTest++;
 				}
-
+				testTime += System.currentTimeMillis()-start;
 				if (m_MVerb) {
 					System.out.println("test time fold 2:\t" + (System.currentTimeMillis() - start));
 					System.out.println(
@@ -272,6 +272,7 @@ public class TwoFoldCVESKDBDisOnTrainAODE {
 			m_RMSE = Math.sqrt(m_RMSE / NTest);
 			m_Error = m_Error / NTest;
 			trainTime = trainTime / (m_nExp*2);
+			testTime = testTime / (m_nExp*2);
 
 //		System.out.println("\n----------------------Bias-Variance Decomposition-------------------");
 //		System.out.println("Classifier:\t" + m_S);
@@ -280,7 +281,7 @@ public class TwoFoldCVESKDBDisOnTrainAODE {
 //		System.out.println("Error : " + Utils.doubleToString(m_Error, 6, 4));
 //		System.out.println("Training time : " + Utils.doubleToString(trainTime, 6, 0));
 			System.out.println("\t"+
-					Utils.doubleToString(m_RMSE, 6, 4) + "\t" + Utils.doubleToString(m_Error, 6, 4) + '\t' + trainTime);
+					Utils.doubleToString(m_RMSE, 6, 4) + "\t" + Utils.doubleToString(m_Error, 6, 4) + '\t' + trainTime+"\t"+testTime);
 		}
 	}
 

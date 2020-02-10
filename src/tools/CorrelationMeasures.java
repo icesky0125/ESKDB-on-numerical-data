@@ -56,7 +56,6 @@ public class CorrelationMeasures {
 				}
 			}
 		}
-
 	}
 
 	public static int[] getMIbasedParent(xxyDist xxyDist_) throws Exception {

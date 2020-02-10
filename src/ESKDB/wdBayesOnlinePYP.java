@@ -128,7 +128,7 @@ public final class wdBayesOnlinePYP implements Classifier,java.io.Serializable {
 			System.out.println("************** Display All the SKDBs **************\n");
 			
 			for (int i = 0; i < parentOrder.size(); i++) {
-				System.out.println("* Attribute order for SKDB_" + (i+1) + " is:\t"+Arrays.toString(upperOrder.get(i)));
+				System.out.println("* Attribute order for classifier_" + (i+1) + " is:\t"+Arrays.toString(upperOrder.get(i)));
 				for (int j = 0; j < parentOrder.get(i).length; j++) {
 					for (int z = 0; z < parentOrder.get(i)[j].length; z++) {
 						System.out.print("parents for attribute " + upperOrder.get(i)[j] + " is:\t"+Arrays.toString(parentOrder.get(i)[j][z]) + "\t");

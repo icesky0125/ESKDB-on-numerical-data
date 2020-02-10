@@ -95,7 +95,7 @@ public final class BNStructure_MDLR {
 			learnStructureSKDB_R(sourceFile,discretizer,generator);
 			break;
 		default:
-			System.out.println("value of m_S has to be in set {NB,TAN,KDB,SKDB,ESKDB_R}");
+			System.out.println("value of m_S has to be in set {NB,TAN,KDB,SKDB,ESKDB}");
 		}
 	}
 

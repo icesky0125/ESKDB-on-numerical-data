@@ -177,7 +177,7 @@ public final class wdBayesOnlinePYP_MDLR implements Classifier, java.io.Serializ
 		case HDP:
 			// HDP smoothing
 			// sharing one cache for all the trees
-			lgcache = LogStirlingFactory.newLogStirlingGenerator(nInstances, 0);
+//			lgcache = LogStirlingFactory.newLogStirlingGenerator(nInstances, 0);
 
 			for (int u = 0; u < this.m_Order.length; u++) {
 				ProbabilityTree tree = dParameters_.getPypTrees()[u];

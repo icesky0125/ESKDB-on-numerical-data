@@ -132,7 +132,8 @@ public class TwoFoldCV {
 				}
 				
 				discretizer[k] = classifiers[k].buildClassifier(trainFile, randomSeed);
-				randomSeed++;
+//				randomSeed++;
+				randomSeed += 1000;
 			}
 
 			trainTime += System.currentTimeMillis() - start;
@@ -241,7 +242,8 @@ public class TwoFoldCV {
 				}
 
 				discretizer[k] = classifiers[k].buildClassifier(trainFile, randomSeed);
-				randomSeed++;
+//				randomSeed++;
+				randomSeed += 1000;
 			}
 
 			trainTime += System.currentTimeMillis() - start;
